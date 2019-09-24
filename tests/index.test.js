@@ -325,30 +325,29 @@ describe("Resolver", () => {
   it("should resolve with type", () => {
     const resolver = new Resolver();
     const resolved = resolver.resolve({
-      "path": "/api/v1",
-      "notypedefault": "{{data.notypedefault|5}}",
-      "numberstring": "{{data.numberstring||number}}",
-      "number": "{{data.number||number}}",
-      "numberdefault": "{{data.numberdefault|5|number}}",
-      "stringnumber": "{{data.stringnumber||string}}",
-      "stringdefault": "{{data.stringdefault|test|string}}",
-      "booldefault": "{{data.booldefault|test|boolean}}",
-      "booltruedefault": "{{data.boolfalsedefault|true|boolean}}",
-      "booleanstring": "{{data.booleanstring||boolean}}",
-      "boolean": "{{data.boolean||boolean}}",
-      "array": "{{data.array|[2,3]|array}}",
-      "defaultarray": "{{data.defaultarray|[2,3]|array}}",
-      "arraystring": "{{data.defaultarray|[2,3]}}",
-      "object": '{{data.object|{"two": 2, "three": 3}|object}}',
-      "defaultobject": '{{data.defaultobject|{"two": 2, "three": 3}|object}}',
-      "defaultobjectstring": '{{data.defaultobject|{"two": 2, "three": 3}}}',
-      "objectstring": '{{data.objectstring||object}}',
-      "undefineddefault": '{{data.undefineddefault||undefined}}',
-      "undefined": '{{data.undefined||undefined}}',
-      "nulldefault": '{{data.nulldefault||null}}',
-      "null": '{{data.null||null}}',
+      withinstring: "replacing within string once {{data.once|5}} and twice {{data.twice|2}}",
+      notypedefault: "{{data.notypedefault|5}}",
+      numberstring: "{{data.numberstring||number}}",
+      number: "{{data.number||number}}",
+      numberdefault: "{{data.numberdefault|5|number}}",
+      stringnumber: "{{data.stringnumber||string}}",
+      stringdefault: "{{data.stringdefault|test|string}}",
+      booldefault: "{{data.booldefault|test|boolean}}",
+      booltruedefault: "{{data.boolfalsedefault|true|boolean}}",
+      booleanstring: "{{data.booleanstring||boolean}}",
+      boolean: "{{data.boolean||boolean}}",
+      array: "{{data.array|[2,3]|array}}",
+      defaultarray: "{{data.defaultarray|[2,3]|array}}",
+      arraystring: "{{data.defaultarray|[2,3]}}",
+      object: '{{data.object|{"two": 2, "three": 3}|object}}',
+      defaultobject: '{{data.defaultobject|{"two": 2, "three": 3}|object}}',
+      defaultobjectstring: '{{data.defaultobject|{"two": 2, "three": 3}}}',
+      objectstring: '{{data.objectstring||object}}',
+      nulldefault: '{{data.nulldefault||null}}',
+      null: '{{data.null||null}}',
     }, {
       data: {
+        once: 1,
         numberstring: "3",
         number: 4,
         stringnumber: 10,
@@ -359,12 +358,11 @@ describe("Resolver", () => {
           one: 1
         },
         objectstring: '{"four":4}',
-        undefined: 4,
         null: 5
       }
     });
     return expect(resolved).toEqual({
-      path: "/api/v1",
+      withinstring: "replacing within string once 1 and twice 2",
       notypedefault: "5",
       numberstring: 3,
       number: 4,
@@ -389,10 +387,77 @@ describe("Resolver", () => {
       objectstring: {
         four: 4
       },
-      undefineddefault: undefined,
       nulldefault: null,
-      undefined: 4,
       null: 5
     })
+  });
+
+  it("should resolve readme example 1", () => {
+    const data = {
+      isFormData: false,
+      appName: 'an_app',
+      email: [{
+        id: 'abc@gmail.com',
+      }],
+      mapValue: {
+        data: {
+          name: "tester",
+          id: 1234
+        }
+      },
+    };
+
+    const template = {
+      method: 'post',
+      isFormData: '{{isFormData}}',
+      userId: 'userid_{{mapValue.data.id}}',
+      data: {
+        userid: '{{email.0.id}}',
+        app_name: '{{appName}}',
+      },
+      extraData: '{{mapValue.data}}'
+    };
+
+    const resolver = new Resolver();
+    const resolvedData = resolver.resolve(template, data);
+    return expect(resolvedData).toEqual({
+      method: 'post',
+      isFormData: false,
+      userId: 'userid_1234',
+      data: {
+        userid: 'abc@gmail.com',
+        app_name: 'an_app',
+      },
+      extraData: {
+        name: "tester",
+        id: 1234
+      }
+    });
+  });
+
+  it("should resolve readme example 2", () => {
+    const data = {};
+
+    const template = {
+      method: 'post',
+      isFormData: '{{isFormData|false}}',
+      userId: 'userid_{{mapValue.data.id|1234}}',
+      data: {
+        userid: '{{email.0.id|abc@gmail.com}}',
+        app_name: '{{appName|an_app}}',
+      }
+    };
+
+    const resolver = new Resolver();
+    const resolvedData = resolver.resolve(template, data);
+    return expect(resolvedData).toEqual({
+      method: 'post',
+      isFormData: 'false',
+      userId: 'userid_1234',
+      data: {
+        userid: 'abc@gmail.com',
+        app_name: 'an_app',
+      }
+    });
   });
 });

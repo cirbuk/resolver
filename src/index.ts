@@ -66,9 +66,7 @@ export default class Resolver {
   getValue(data: any, dataKey: string = '') {
     let [key, defaultValue, type = ''] = dataKey.split(this.delimiter);
     let finalDefaultValue: any = defaultValue;
-    if(type === 'undefined') {
-      finalDefaultValue = undefined;
-    } else if(type === 'null') {
+    if(type === 'null') {
       finalDefaultValue = null;
     }
     let value = get(data, key, finalDefaultValue);
@@ -79,13 +77,7 @@ export default class Resolver {
         value = `${value}`;
       } else if(type === "boolean") {
         value = typeof value === "boolean" ? value : value === "true";
-      }
-      // else if(type === "undefined") {
-      //   value = isUndefined(value) ? undefined : value;
-      // } else if(type === "null") {
-      //   value = isUndefined(value) ? null : value;
-      // }
-      else if(type === "array") {
+      } else if(type === "array") {
         value = Array.isArray(value) ? value : JSON.parse(value);
       } else if(type === "object") {
         value = isPlainObject(value) ? value : JSON.parse(value);
