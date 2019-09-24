@@ -20,7 +20,7 @@ const data = {
   mapValue: ["mapper"]
 };
 
-describe("resolver", () => {
+describe("Resolver", () => {
   it("resolve case", () => {
     const resolver = new Resolver();
     return expect(resolver.resolve(template, data)).toEqual({
@@ -195,7 +195,7 @@ describe("resolver", () => {
       });
   });
 
-  it("Resolution to function string", () => {
+  it("resolution to function string", () => {
     const resolver = new Resolver({
       ignoreUndefined: true
     });
@@ -236,7 +236,7 @@ describe("resolver", () => {
       });
   });
 
-  it("Resolution to function object", () => {
+  it("resolution to function object", () => {
     const resolver = new Resolver({
       ignoreUndefined: true
     });
@@ -277,7 +277,7 @@ describe("resolver", () => {
       });
   });
 
-  it("Resolution from resolved function object", () => {
+  it("resolution from resolved function object", () => {
     const resolver = new Resolver({
       ignoreUndefined: true
     });
@@ -322,4 +322,77 @@ describe("resolver", () => {
       });
   });
 
+  it("should resolve with type", () => {
+    const resolver = new Resolver();
+    const resolved = resolver.resolve({
+      "path": "/api/v1",
+      "notypedefault": "{{data.notypedefault|5}}",
+      "numberstring": "{{data.numberstring||number}}",
+      "number": "{{data.number||number}}",
+      "numberdefault": "{{data.numberdefault|5|number}}",
+      "stringnumber": "{{data.stringnumber||string}}",
+      "stringdefault": "{{data.stringdefault|test|string}}",
+      "booldefault": "{{data.booldefault|test|boolean}}",
+      "booltruedefault": "{{data.boolfalsedefault|true|boolean}}",
+      "booleanstring": "{{data.booleanstring||boolean}}",
+      "boolean": "{{data.boolean||boolean}}",
+      "array": "{{data.array|[2,3]|array}}",
+      "defaultarray": "{{data.defaultarray|[2,3]|array}}",
+      "arraystring": "{{data.defaultarray|[2,3]}}",
+      "object": '{{data.object|{"two": 2, "three": 3}|object}}',
+      "defaultobject": '{{data.defaultobject|{"two": 2, "three": 3}|object}}',
+      "defaultobjectstring": '{{data.defaultobject|{"two": 2, "three": 3}}}',
+      "objectstring": '{{data.objectstring||object}}',
+      "undefineddefault": '{{data.undefineddefault||undefined}}',
+      "undefined": '{{data.undefined||undefined}}',
+      "nulldefault": '{{data.nulldefault||null}}',
+      "null": '{{data.null||null}}',
+    }, {
+      data: {
+        numberstring: "3",
+        number: 4,
+        stringnumber: 10,
+        booleanstring: "test",
+        boolean: true,
+        array: [1],
+        object: {
+          one: 1
+        },
+        objectstring: '{"four":4}',
+        undefined: 4,
+        null: 5
+      }
+    });
+    return expect(resolved).toEqual({
+      path: "/api/v1",
+      notypedefault: "5",
+      numberstring: 3,
+      number: 4,
+      numberdefault: 5,
+      stringnumber: "10",
+      stringdefault: "test",
+      booldefault: false,
+      booltruedefault: true,
+      booleanstring: false,
+      boolean: true,
+      array: [1],
+      defaultarray: [2, 3],
+      arraystring: "[2,3]",
+      defaultobjectstring: '{"two": 2, "three": 3}',
+      defaultobject: {
+        two: 2,
+        three: 3
+      },
+      object: {
+        one: 1
+      },
+      objectstring: {
+        four: 4
+      },
+      undefineddefault: undefined,
+      nulldefault: null,
+      undefined: 4,
+      null: 5
+    })
+  });
 });

@@ -12,7 +12,8 @@ export interface ResolverOptions {
   ignoreUndefined?: boolean,
   transformer?: Function,
   fields?: FieldsOption,
-  transformMap?: TransformMapType
+  transformMap?: TransformMapType,
+  delimiter?: string
 }
 
 export interface ResolveFunctionOptions {
