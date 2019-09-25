@@ -208,7 +208,7 @@ const resolver = new Resolver();
 const resolvedData = resolver.resolve(template, data);
 
 // resolvedData will be
-{
+// {
 //   withinstring: "replacing within string once 1 and twice 2",
 //   notypedefault: "5",
 //   numberstring: 3,
