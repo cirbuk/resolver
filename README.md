@@ -277,8 +277,16 @@ const resolvedData = resolver.resolve(template, data);
 
 Transformers can be defined in 3 places
 
-1. mapping: This transformer affects only the mapping for which it is defined. eg. The transformer defined in the above code.
-2. `resolve()` function call: This transformer affects every mapping in the template that is passed to it
+1. mapping: This transformer affects only the mapping for which it is defined. eg. The transformer defined in the above code. A mapping transformer, if defined will always be called.
+2. `resolve()` function call: When `resolve()` is called, a `transformer` function can be passed in the `options`(see [resolve()](#resolver.resolve())). This transformer will be called for every mapping in the template, other than the mappings that have a transformer already defined.
+3. `new Resolver()`: When a resolver instance is created, a transformer can b e passed in the `options`(see [options](#options)). This transformer will be called for all mappings for all calls to the `resolve()` function.
+
+Rules for transformer invocation are as follows
+
+1. Only one transformer will be called for a mapping
+2. Order of precedence of if transformers have been defined in multiple levels - mapping > `resolve()` > `new Resolver()`
+
+## transformMap
 
 ## API
 
@@ -303,7 +311,8 @@ it becomes the responsibility of the transformer to return the correct value wit
 
 **fields**: `optional` Accepts the field names as an object with properties `mapping` and `transformer` for advanced mappings. Defaults to `_mapping` for the mapping field and `_transformer` for the transformer field. See section **Advanced Mapping** for more details. 
 
-#### resolver.resolve(template, data, [transformer])
+### resolver.resolve()
+
 * **template**: `required` template JSON object containing the markup mappings that need to be resolved
 * **data**: `required` template JSON object containing the markup mappings that need to be resolved
 * **transformer**: `optional` This transformer overrides the transformer set(if any) while creating the object. Transformer function 
