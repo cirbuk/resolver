@@ -1,6 +1,6 @@
 export type TransformerType = (match: string, ...parts: any[]) => string;
-export type TransformMapEntryType = Array<RegExp | TransformerType | string>;
-export type TransformMapType = Array<TransformMapEntryType>;
+export type CustomMappersEntryType = Array<RegExp | TransformerType | string>;
+export type CustomMappersType = Array<CustomMappersEntryType>;
 
 export interface FieldsOption {
   mapping?: string,
@@ -12,11 +12,11 @@ export interface ResolverOptions {
   ignoreUndefined?: boolean,
   transformer?: Function,
   fields?: FieldsOption,
-  transformMap?: TransformMapType,
+  customMappers?: CustomMappersType,
   delimiter?: string
 }
 
 export interface ResolveFunctionOptions {
   transformer?: Function,
-  transformMap?: TransformMapType
+  customMappers?: CustomMappersType
 }

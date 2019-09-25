@@ -133,29 +133,36 @@ const template = {
   //{{data.notypedefault|5}} = "5" resolved from default value
   notypedefault: "{{data.notypedefault|5}}",
 
-  //{{data.numberstring||number}} = 3 resolved from data.numberstring("3") and converted to number(3)
+  //{{data.numberstring||number}} = 3 resolved from data.numberstring("3") and
+  //converted to number(3)
   numberstring: "{{data.numberstring||number}}",
 
-  //{{data.number||number}} = 4 resolved from data.number(4) and converted to number(4)
+  //{{data.number||number}} = 4 resolved from data.number(4) and converted to
+  //number(4)
   number: "{{data.number||number}}",
 
-  //{{data.numberdefault|5|number}} = 5 resolved from defaultValue("5") and converted to number(5)
+  //{{data.numberdefault|5|number}} = 5 resolved from defaultValue("5") and
+  //converted to number(5)
   numberdefault: "{{data.numberdefault|5|number}}",
 
-  //{{data.stringnumber||string}} = "10" resolved from data.stringnumber(10) and converted to string("10")
+  //{{data.stringnumber||string}} = "10" resolved from data.stringnumber(10) and
+  //converted to string("10")
   stringnumber: "{{data.stringnumber||string}}",
 
   //{{data.stringdefault|test|string}} = "test" resolved from default value("test")
   stringdefault: "{{data.stringdefault|test|string}}",
 
-  //boolean type resolves to true for boolean true and string "true". It resolves to false for everything else
+  //boolean type resolves to true for boolean true and string "true". It resolve
+  //to false for everything else
   //{{data.booldefault|test|boolean}} = false resolved from default value("test").
   booldefault: "{{data.booldefault|test|boolean}}",
 
-  //{{data.boolfalsedefault|true|boolean}} = true resolved from default value("true").
+  //{{data.boolfalsedefault|true|boolean}} = true resolved from default value
+  //("true").
   booltruedefault: "{{data.boolfalsedefault|true|boolean}}",
 
-  //{{data.booleanstring||boolean}} = false resolved from data.booleanstring("test").
+  //{{data.booleanstring||boolean}} = false resolved from data.booleanstring
+  //("test").
   booleanstring: "{{data.booleanstring||boolean}}",
 
   //{{data.boolean||boolean}} = true resolved from data.boolean(true).
@@ -164,25 +171,32 @@ const template = {
   //{{data.array|[2,3]|array}} = [1] resolved from data.array([1])
   array: "{{data.array|[2,3]|array}}",
 
-  //{{data.defaultarray|[2,3]|array}} = [2,3] resolved from default value("[2,3]") and converted to array([2,3])
+  //{{data.defaultarray|[2,3]|array}} = [2,3] resolved from default value("[2,3]")
+  //and converted to array([2,3])
   defaultarray: "{{data.defaultarray|[2,3]|array}}",
 
   //{{data.defaultarray|[2,3]}} = "[2,3]" resolved from default value("[2,3]")
   arraystring: "{{data.defaultarray|[2,3]}}",
 
-  //{{data.object|{"two": 2, "three": 3}|object}} = {"one":1} resolved from data.object({"one":1})
+  //{{data.object|{"two": 2, "three": 3}|object}} = {"one":1} resolved from
+  //data.object({"one":1})
   object: '{{data.object|{"two": 2, "three": 3}|object}}',
 
-  //{{data.defaultobject|{"two": 2, "three": 3}|object}} = {"two":2,"three":3} resolved from default value('{"two": 2, "three": 3}') and converted to object({"two": 2, "three": 3})
+  //{{data.defaultobject|{"two": 2, "three": 3}|object}} = {"two":2,"three":3}
+  //resolved from default value('{"two": 2, "three": 3}') and converted to object
+  //({"two": 2, "three": 3})
   defaultobject: '{{data.defaultobject|{"two": 2, "three": 3}|object}}',
 
-  //{{data.defaultobject|{"two": 2, "three": 3}}} = '{"two": 2, "three": 3}' resolved from default value('{"two": 2, "three": 3}')
+  //{{data.defaultobject|{"two": 2, "three": 3}}} = '{"two": 2, "three": 3}'
+  //resolved from default value('{"two": 2, "three": 3}')
   defaultobjectstring: '{{data.defaultobject|{"two": 2, "three": 3}}}',
 
-  //{{data.objectstring||object}} = {"four": 4} resolved from data.objectstring('{"four": 4}') and converted to object({"four": 4})
+  //{{data.objectstring||object}} = {"four": 4} resolved from data.objectstring
+  //('{"four": 4}') and converted to object({"four": 4})
   objectstring: '{{data.objectstring||object}}',
 
-  //null is a special type. If the type is null and the mapping results in an undefined value, the mapping resolved to null
+  //null is a special type. If the type is null and the mapping results in an
+  //undefined value, the mapping resolved to null
   //{{data.nulldefault||null}} = null as data.nulldefault returns undefined
   nulldefault: '{{data.nulldefault||null}}',
 
@@ -229,6 +243,8 @@ const resolvedData = resolver.resolve(template, data);
 
 Transformers can be defined in the template when extracted data need to be transformed before being applied.
 
+In the template if any of the properties have as its value, an object with just the 2 properties `_mapping` and `_transformer` where `_transformer` is a function, then the resolver will resolve the mapping string from the data object and get the value resolved by passing it to the transformer function.
+
 ``` javascript
 import Resolver from "@kubric/json-resolver"
 
@@ -239,7 +255,11 @@ const data = {
 const template = {
   method: 'post',
   isFormData: {
+    //resolves to false
     _mapping: "{{isFormData}}",
+
+    //The value false resolved using the _mapping is passed to the function. The
+    //value that the function returns will become the value of isFormData
     _transformer(value) {
       return value === false ? "This is a false value" : "This is a true value";
     }
@@ -255,6 +275,11 @@ const resolvedData = resolver.resolve(template, data);
 // }
 ```
 
+Transformers can be defined in 3 places
+
+1. mapping: This transformer affects only the mapping for which it is defined. eg. The transformer defined in the above code.
+2. `resolve()` function call: This transformer affects every mapping in the template that is passed to it
+
 ## API
 
 ### new Resolver(options)
@@ -265,11 +290,11 @@ Creates a new Resolver instance
 
 `options` should be an object with the following properties
 
-**replaceUndefinedWith**: `optional` If a mapping path does not exist or is marked as `undefined` in the data json, the value of that mapping is taken to be `undefined`. `replaceUndefinedWith` can be used to replace such missing mappings with a custom value.
-
-**ignoreUndefined**: `optional` If `true`, mappings that do not exist or returns `undefined` from the data json will be ignored and left as is without resolving them. Default value: `false`.
-
-**delimiter**: `optional` Sets the delimiter pattern that is used to delimit between mapping, default value and type in a mapping string. Default value: `|`.
+Property | Description | Remarks
+---------|-------------|----------
+replaceUndefinedWith | If a mapping path does not exist or is marked as `undefined` in the data json, the value of that mapping is taken to be `undefined`. `replaceUndefinedWith` can be used to replace such missing mappings with a custom value. | optional
+ignoreUndefined | If `true`, mappings that do not exist or returns `undefined` from the data json will be ignored and left as is without resolving them. | optional <br/><br/> Default value: `false`.
+delimiter | Sets the delimiter pattern that is used to delimit between mapping, default value and type in a mapping string. | optional <br/><br/> Default value: `|`.
 
 **transformer(mapping, value)**: `optional` Accepts a function which will be invoked for every mapping found, with the mapping 
 string and the value resolved for that mapping. Whatever is returned by this method then becomes the value that will be replaced

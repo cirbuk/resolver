@@ -9,14 +9,14 @@ import {
   isValidString,
   isPlainObject
 } from "@kubric/litedash";
-import { ResolveFunctionOptions, ResolverOptions, TransformerType, TransformMapType } from "./interfaces";
+import { ResolveFunctionOptions, ResolverOptions, TransformerType, CustomMappersType } from "./interfaces";
 
 export default class Resolver {
   mappingField: string;
   replaceUndefinedWith?: any;
   transformerField: string;
   transformer?: Function;
-  transformMap?: TransformMapType;
+  customMappers?: CustomMappersType;
   ignoreUndefined?: boolean;
   delimiter: string;
 
@@ -24,7 +24,7 @@ export default class Resolver {
                 replaceUndefinedWith,
                 ignoreUndefined = false,
                 transformer,
-                transformMap,
+                customMappers,
                 fields = {
                   mapping: "_mapping",
                   transformer: "_transformer"
@@ -36,7 +36,7 @@ export default class Resolver {
       this.ignoreUndefined = ignoreUndefined;
     }
     this.transformer = transformer;
-    this.transformMap = transformMap;
+    this.customMappers = customMappers;
     const { mapping: mappingField, transformer: transformerField } = fields;
     this.mappingField = isValidString(mappingField) ? mappingField as string : "_mapping";
     this.transformerField = isValidString(transformerField) ? transformerField as string : "_transformer";
@@ -46,11 +46,11 @@ export default class Resolver {
   getTransformedResult(dataKey: string, value: any, transformer: Function | undefined, match: string) {
     value = !isUndefined(value) ? value : (this.ignoreUndefined ? match : this.replaceUndefinedWith);
     transformer = transformer || this.transformer;
-    return isFunction(transformer) ? (transformer as Function)(dataKey, value) : value;
+    return isFunction(transformer) ? (transformer as Function)(value, dataKey) : value;
   }
 
-  static resolveTransformMap(srcStr: string, transformMap: TransformMapType = []) {
-    return transformMap.reduce((accStr, [regex, transformer]) => {
+  static resolveCustomMappers(srcStr: string, customMappers: CustomMappersType = []) {
+    return customMappers.reduce((accStr, [regex, transformer]) => {
       if(!isString(accStr)) {
         return accStr;
       } else if((regex as RegExp).global) {
@@ -99,10 +99,10 @@ export default class Resolver {
     }
   }
 
-  resolveString(templateStr: string, data: any, { transformer, transformMap = [] }: ResolveFunctionOptions = {}) {
+  resolveString(templateStr: string, data: any, { transformer, customMappers = [] }: ResolveFunctionOptions = {}) {
     transformer = transformer || this.transformer;
-    transformMap = transformMap || this.transformMap;
-    if(!isUndefined(data) || isFunction(transformer) || transformMap.length > 0) {
+    customMappers = customMappers || this.customMappers;
+    if(!isUndefined(data) || isFunction(transformer) || customMappers.length > 0) {
       let resultString = templateStr;
       const matches = this.hasMultipleMatches(templateStr);
       if(matches !== null) {
@@ -111,7 +111,7 @@ export default class Resolver {
       } else {
         resultString = templateStr.replace(/{{(.+?)}}/g, (match, datakey) => this.getTransformedResult(datakey, this.getValue(data, datakey), transformer, match));
       }
-      resultString = Resolver.resolveTransformMap(resultString, transformMap);
+      resultString = Resolver.resolveCustomMappers(resultString, customMappers);
       return resultString;
     } else {
       return templateStr;
@@ -126,8 +126,8 @@ export default class Resolver {
     return mapValues(template, (value: string) => this.resolveTemplate(value, data, options));
   }
 
-  static processTransformMap(transformMap: TransformMapType = []) {
-    return transformMap.reduce((acc, [regex, transformer] = []) => {
+  static processCustomMappers(customMappers: CustomMappersType = []) {
+    return customMappers.reduce((acc, [regex, transformer] = []) => {
       if(!isFunction(transformer)) {
         return acc;
       }
@@ -138,7 +138,7 @@ export default class Resolver {
       } else {
         return acc;
       }
-    }, [] as TransformMapType);
+    }, [] as CustomMappersType);
   }
 
   resolve(template: any, data: any, options: ResolveFunctionOptions | Function = {}) {
@@ -147,16 +147,16 @@ export default class Resolver {
         transformer: options
       } as ResolveFunctionOptions;
     } else {
-      const { transformMap, ...rest } = options as ResolveFunctionOptions;
+      const { customMappers, ...rest } = options as ResolveFunctionOptions;
       options = {
         ...rest,
-        transformMap: Resolver.processTransformMap(transformMap)
+        customMappers: Resolver.processCustomMappers(customMappers)
       };
     }
     return this.resolveTemplate(template, data, options);
   };
 
-  resolveTemplate(template: any, data: any, options?: ResolveFunctionOptions) {
+  resolveTemplate(template: any, data: any, options?: ResolveFunctionOptions): any {
     if(Array.isArray(template)) {
       return this.resolveArray(template, data, options);
     } else if(isString(template)) {
@@ -164,9 +164,11 @@ export default class Resolver {
     } else if(isObject(template)) {
       const _mapping = template[this.mappingField];
       const _transformer = template[this.transformerField];
-      if(_mapping && _transformer && isFunction(_transformer)) {
-        const resolvedData: any = this.resolveTemplate(_mapping, data, options);
-        return _transformer(resolvedData);
+      if(Object.keys(template).length === 2 && _mapping && _transformer && isFunction(_transformer)) {
+        return this.resolveTemplate(_mapping, data, {
+          ...options,
+          transformer: _transformer
+        });
       } else {
         return this.resolveObject(template, data, options);
       }

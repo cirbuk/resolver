@@ -120,7 +120,7 @@ describe("Resolver", () => {
 
   it("instance transformer", () => {
     const resolver = new Resolver({
-      transformer(key, value) {
+      transformer(value, key) {
         return key === "boolean" ? "This is true" : value;
       }
     });
@@ -137,7 +137,7 @@ describe("Resolver", () => {
 
   it("function transformer", () => {
     const resolver = new Resolver();
-    return expect(resolver.resolve(template, data, (key, value) => key === "boolean" ? "This is true" : value))
+    return expect(resolver.resolve(template, data, (value, key) => key === "boolean" ? "This is true" : value))
       .toEqual({
         path: "authenticate",
         method: "post",
@@ -151,7 +151,7 @@ describe("Resolver", () => {
 
   it("string with transformer", () => {
     const resolver = new Resolver({
-      transformer(key, value) {
+      transformer(value, key) {
         return typeof value === "undefined" ? "" : `(${value})`;
       }
     });
@@ -165,7 +165,7 @@ describe("Resolver", () => {
       "generation-completed": " completed",
       "value": "10"
     }, {
-      transformMap: [["\\[\\[(.+?)\\]\\]", (match, formula) => math.eval(formula)]]
+      customMappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => math.eval(formula)]]
     }))
       .toEqual("Ads will be published to Facebook for all ads completed under this campaign (20)");
   });
@@ -223,7 +223,7 @@ describe("Resolver", () => {
         cookie: "uid"
       }
     }, {
-      transformMap: [["\\[\\[(.+?)\\]\\]", (match, formula) => transformers[formula] || transformers['default']]]
+      customMappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => transformers[formula] || transformers['default']]]
     }))
       .toEqual({
         "headers": { "Authorization": "Bearer {{token}}" },
@@ -264,7 +264,7 @@ describe("Resolver", () => {
         cookie: "uid"
       }
     }, {
-      transformMap: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
+      customMappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
     }))
       .toEqual({
         "headers": { "Authorization": "Bearer {{token}}" },
@@ -305,7 +305,7 @@ describe("Resolver", () => {
         cookie: "uid"
       }
     }, {
-      transformMap: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
+      customMappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
     });
     return expect(resolver.resolve(fnResolvedObject, {
       token: "345",
@@ -458,6 +458,89 @@ describe("Resolver", () => {
         userid: 'abc@gmail.com',
         app_name: 'an_app',
       }
+    });
+  });
+
+  it("should call only mapping transformer", () => {
+    const data = {
+      value: 3
+    };
+
+    const template = {
+      value: {
+        _mapping: "{{value}}",
+        _transformer(value) {
+          return `The value ${value} transformed by the mapping transformer`;
+        }
+      }
+    };
+
+    const resolver = new Resolver({
+      transformer(value, mapping) {
+        if (mapping === "value") {
+          return `The value ${value} transformed by the global transformer`;
+        }
+      }
+    });
+    const resolvedData = resolver.resolve(template, data, {
+      transformer(value, mapping) {
+        if (mapping === "value") {
+          return `The value ${value} transformed by the function transformer`;
+        }
+      }
+    });
+    return expect(resolvedData).toEqual({
+      value: `The value 3 transformed by the mapping transformer`
+    });
+  });
+
+  it("should call only function transformer", () => {
+    const data = {
+      value: 3
+    };
+
+    const template = {
+      value: "{{value}}",
+    };
+
+    const resolver = new Resolver({
+      transformer(value, mapping) {
+        if (mapping === "value") {
+          return `The value ${value} transformed by the global transformer`;
+        }
+      }
+    });
+    const resolvedData = resolver.resolve(template, data, {
+      transformer(value, mapping) {
+        if (mapping === "value") {
+          return `The value ${value} transformed by the function transformer`;
+        }
+      }
+    });
+    return expect(resolvedData).toEqual({
+      value: `The value 3 transformed by the function transformer`
+    });
+  });
+
+  it("should call global transformer", () => {
+    const data = {
+      value: 3
+    };
+
+    const template = {
+      value: "{{value}}",
+    };
+
+    const resolver = new Resolver({
+      transformer(value, mapping) {
+        if (mapping === "value") {
+          return `The value ${value} transformed by the global transformer`;
+        }
+      }
+    });
+    const resolvedData = resolver.resolve(template, data);
+    return expect(resolvedData).toEqual({
+      value: `The value 3 transformed by the global transformer`
     });
   });
 });
