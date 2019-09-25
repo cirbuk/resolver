@@ -36,7 +36,7 @@ export default class Resolver {
       this.ignoreUndefined = ignoreUndefined;
     }
     this.transformer = transformer;
-    this.mappers = mappers;
+    this.mappers = Resolver.processMappers(mappers);
     const { mapping: mappingField, transformer: transformerField } = fields;
     this.mappingField = isValidString(mappingField) ? mappingField as string : "_mapping";
     this.transformerField = isValidString(transformerField) ? transformerField as string : "_transformer";
@@ -53,12 +53,19 @@ export default class Resolver {
     return mappers.reduce((accStr, [regex, transformer]) => {
       if(!isString(accStr)) {
         return accStr;
-      } else if((regex as RegExp).global) {
-        return accStr.replace(regex as RegExp, transformer as TransformerType);
       } else {
         const results = (regex as RegExp).exec(accStr);
-        //@ts-ignore
-        return isNull(results) ? accStr : (transformer as TransformerType)(...results);
+        if(isNull(results)) {
+          return accStr;
+        } else {
+          //@ts-ignore
+          if(results[0] !== accStr) {
+            return accStr.replace(regex as RegExp, transformer as TransformerType);
+          } else {
+            //@ts-ignore
+            return (transformer as TransformerType)(...results);
+          }
+        }
       }
     }, srcStr);
   }
@@ -111,7 +118,7 @@ export default class Resolver {
       } else {
         resultString = templateStr.replace(/{{(.+?)}}/g, (match, datakey) => this.getTransformedResult(datakey, this.getValue(data, datakey), transformer, match));
       }
-      resultString = Resolver.resolveMappers(resultString, mappers);
+      resultString = mappers.length > 0 ? Resolver.resolveMappers(resultString, mappers) : resultString;
       return resultString;
     } else {
       return templateStr;
@@ -150,7 +157,7 @@ export default class Resolver {
       const { mappers, ...rest } = options as ResolveFunctionOptions;
       options = {
         ...rest,
-        mappers: Resolver.processMappers(mappers)
+        mappers: mappers ? Resolver.processMappers(mappers) : this.mappers
       };
     }
     return this.resolveTemplate(template, data, options);

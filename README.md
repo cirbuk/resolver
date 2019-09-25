@@ -245,7 +245,7 @@ Transformers can be defined in the template when extracted data need to be trans
 
 In the template if any of the properties have as its value, an object with just the 2 properties `_mapping` and `_transformer` where `_transformer` is a function, then the resolver will resolve the mapping string from the data object and get the value resolved by passing it to the transformer function.
 
-``` javascript
+``` JavaScript
 import Resolver from "@kubric/json-resolver"
 
 const data = {
@@ -287,6 +287,57 @@ Rules for transformer invocation are as follows
 2. Order of precedence of if transformers have been defined in multiple levels - mapping > `resolve()` > `new Resolver()`
 
 ## mappers
+
+The resolver's default behavior is to try and replace everything between `{{` and `}}` with values from the data json. `mappers` can be used to define other markup operators and their behavior.
+
+```JavaScript
+import Resolver from "@kubric/json-resolver"
+import math from "math-expression-evaluator";
+
+const data = {
+  val1: "1",
+  val2: "2",
+  val3: "3",
+  val4: "4",
+};
+
+const evaluators = {
+  math: (match, formula) => {
+    try {
+      return +math.eval(formula);
+    } catch (ex) {
+      return match;
+    }
+  }
+};
+
+const template = {
+  //Multiple mappings are used inside a string here. So the values returned by
+  //the evaluator will be replaced into the string. The final value here will
+  //be the string "3 and 7"
+  calculatedStringValue: "[[{{val1}} + {{val2}}]] and [[{{val3}} + {{val4}}]]",
+  
+  //The entire string is one mapping. So value returned by the evaluator will be
+  //assigned as such. The final value here will be the number 5
+  calculatedNumberValue: "[[{{val1}} + {{val4}}]]"
+};
+
+//Anything that is enclosed within [[ and ]] will be passed to the math evaluator
+const resolver = new Resolver({
+  mappers: [
+    [/\[\[(.+?)]]/g, evaluators.math]
+  ]
+});
+
+const resolvedData = resolver.resolve(template, data);
+// resolvedData will be
+// {
+//     calculatedStringValue: '3 and 7',
+//     calculatedNumberValue: 5
+// }
+```
+
+> `mappers` take effect only after standard mappings i.e. mappings between `{{` and `}}` are resolved and the transformer pipeline has been executed. The standard mapping operator cannot be overridden using custom mappers.
 
 ## API
 

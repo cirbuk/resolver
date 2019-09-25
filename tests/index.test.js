@@ -195,47 +195,6 @@ describe("Resolver", () => {
       });
   });
 
-  it("resolution to function string", () => {
-    const resolver = new Resolver({
-      ignoreUndefined: true
-    });
-    const transformers = {
-      json(value) {
-        return JSON.stringify(value);
-      },
-      default(value) {
-        return value;
-      }
-    };
-    return expect(resolver.resolve({
-      "headers": { "Authorization": "Bearer {{token}}" },
-      "host": "{{__kubric_config__.host}}",
-      "path": "/api/v1",
-      "ad": {
-        "_mapping": "adData",
-        "_transformer": "[[json]]"
-      }
-    }, {
-      "__kubric_config__": {
-        host: "https://kubric.io",
-        apiHost: "https://api.kubric.io",
-        root: "root.kubric.io",
-        cookie: "uid"
-      }
-    }, {
-      mappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => transformers[formula] || transformers['default']]]
-    }))
-      .toEqual({
-        "headers": { "Authorization": "Bearer {{token}}" },
-        "host": "https://kubric.io",
-        "path": "/api/v1",
-        "ad": {
-          "_mapping": "adData",
-          "_transformer": transformers.json.toString()
-        }
-      });
-  });
-
   it("resolution to function object", () => {
     const resolver = new Resolver({
       ignoreUndefined: true
@@ -248,7 +207,7 @@ describe("Resolver", () => {
         return value;
       }
     };
-    return expect(resolver.resolve({
+    const resolvedData = resolver.resolve({
       "headers": { "Authorization": "Bearer {{token}}" },
       "host": "{{__kubric_config__.host}}",
       "path": "/api/v1",
@@ -265,16 +224,12 @@ describe("Resolver", () => {
       }
     }, {
       mappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
-    }))
-      .toEqual({
-        "headers": { "Authorization": "Bearer {{token}}" },
-        "host": "https://kubric.io",
-        "path": "/api/v1",
-        "ad": {
-          "_mapping": "{{adData}}",
-          "_transformer": transformers.json
-        }
-      });
+    });
+    return expect(
+      typeof resolvedData.ad._transformer === "function" &&
+      resolvedData.ad._transformer === transformers.json
+    )
+      .toEqual(true);
   });
 
   it("resolution from resolved function object", () => {
@@ -458,6 +413,41 @@ describe("Resolver", () => {
         userid: 'abc@gmail.com',
         app_name: 'an_app',
       }
+    });
+  });
+
+  it("should resolve readme example 3", () => {
+    const data = {
+      val1: "1",
+      val2: "2",
+      val3: "3",
+      val4: "4",
+    };
+
+    const evaluators = {
+      math: (match, formula) => {
+        try {
+          return +math.eval(formula);
+        } catch (ex) {
+          return match;
+        }
+      }
+    };
+
+    const template = {
+      calculatedStringValue: "[[{{val1}} + {{val2}}]] and [[{{val3}} + {{val4}}]]",
+      calculatedNumberValue: "[[{{val1}} + {{val4}}]]"
+    };
+
+    const resolver = new Resolver({
+      mappers: [
+        [/\[\[(.+?)]]/g, evaluators.math]
+      ]
+    });
+    const resolvedData = resolver.resolve(template, data);
+    return expect(resolvedData).toEqual({
+      calculatedStringValue: '3 and 7',
+      calculatedNumberValue: 5
     });
   });
 
