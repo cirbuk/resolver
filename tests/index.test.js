@@ -165,7 +165,7 @@ describe("Resolver", () => {
       "generation-completed": " completed",
       "value": "10"
     }, {
-      customMappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => math.eval(formula)]]
+      mappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => math.eval(formula)]]
     }))
       .toEqual("Ads will be published to Facebook for all ads completed under this campaign (20)");
   });
@@ -223,7 +223,7 @@ describe("Resolver", () => {
         cookie: "uid"
       }
     }, {
-      customMappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => transformers[formula] || transformers['default']]]
+      mappers: [["\\[\\[(.+?)\\]\\]", (match, formula) => transformers[formula] || transformers['default']]]
     }))
       .toEqual({
         "headers": { "Authorization": "Bearer {{token}}" },
@@ -264,7 +264,7 @@ describe("Resolver", () => {
         cookie: "uid"
       }
     }, {
-      customMappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
+      mappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
     }))
       .toEqual({
         "headers": { "Authorization": "Bearer {{token}}" },
@@ -305,7 +305,7 @@ describe("Resolver", () => {
         cookie: "uid"
       }
     }, {
-      customMappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
+      mappers: [[/\[\[(.+?)]]/, (match, formula) => transformers[formula] || transformers['default']]]
     });
     return expect(resolver.resolve(fnResolvedObject, {
       token: "345",

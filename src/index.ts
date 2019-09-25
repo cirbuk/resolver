@@ -9,14 +9,14 @@ import {
   isValidString,
   isPlainObject
 } from "@kubric/litedash";
-import { ResolveFunctionOptions, ResolverOptions, TransformerType, CustomMappersType } from "./interfaces";
+import { ResolveFunctionOptions, ResolverOptions, TransformerType, MappersType } from "./interfaces";
 
 export default class Resolver {
   mappingField: string;
   replaceUndefinedWith?: any;
   transformerField: string;
   transformer?: Function;
-  customMappers?: CustomMappersType;
+  mappers?: MappersType;
   ignoreUndefined?: boolean;
   delimiter: string;
 
@@ -24,7 +24,7 @@ export default class Resolver {
                 replaceUndefinedWith,
                 ignoreUndefined = false,
                 transformer,
-                customMappers,
+                mappers,
                 fields = {
                   mapping: "_mapping",
                   transformer: "_transformer"
@@ -36,7 +36,7 @@ export default class Resolver {
       this.ignoreUndefined = ignoreUndefined;
     }
     this.transformer = transformer;
-    this.customMappers = customMappers;
+    this.mappers = mappers;
     const { mapping: mappingField, transformer: transformerField } = fields;
     this.mappingField = isValidString(mappingField) ? mappingField as string : "_mapping";
     this.transformerField = isValidString(transformerField) ? transformerField as string : "_transformer";
@@ -49,8 +49,8 @@ export default class Resolver {
     return isFunction(transformer) ? (transformer as Function)(value, dataKey) : value;
   }
 
-  static resolveCustomMappers(srcStr: string, customMappers: CustomMappersType = []) {
-    return customMappers.reduce((accStr, [regex, transformer]) => {
+  static resolveMappers(srcStr: string, mappers: MappersType = []) {
+    return mappers.reduce((accStr, [regex, transformer]) => {
       if(!isString(accStr)) {
         return accStr;
       } else if((regex as RegExp).global) {
@@ -99,10 +99,10 @@ export default class Resolver {
     }
   }
 
-  resolveString(templateStr: string, data: any, { transformer, customMappers = [] }: ResolveFunctionOptions = {}) {
+  resolveString(templateStr: string, data: any, { transformer, mappers = [] }: ResolveFunctionOptions = {}) {
     transformer = transformer || this.transformer;
-    customMappers = customMappers || this.customMappers;
-    if(!isUndefined(data) || isFunction(transformer) || customMappers.length > 0) {
+    mappers = mappers || this.mappers;
+    if(!isUndefined(data) || isFunction(transformer) || mappers.length > 0) {
       let resultString = templateStr;
       const matches = this.hasMultipleMatches(templateStr);
       if(matches !== null) {
@@ -111,7 +111,7 @@ export default class Resolver {
       } else {
         resultString = templateStr.replace(/{{(.+?)}}/g, (match, datakey) => this.getTransformedResult(datakey, this.getValue(data, datakey), transformer, match));
       }
-      resultString = Resolver.resolveCustomMappers(resultString, customMappers);
+      resultString = Resolver.resolveMappers(resultString, mappers);
       return resultString;
     } else {
       return templateStr;
@@ -126,8 +126,8 @@ export default class Resolver {
     return mapValues(template, (value: string) => this.resolveTemplate(value, data, options));
   }
 
-  static processCustomMappers(customMappers: CustomMappersType = []) {
-    return customMappers.reduce((acc, [regex, transformer] = []) => {
+  static processMappers(mappers: MappersType = []) {
+    return mappers.reduce((acc, [regex, transformer] = []) => {
       if(!isFunction(transformer)) {
         return acc;
       }
@@ -138,7 +138,7 @@ export default class Resolver {
       } else {
         return acc;
       }
-    }, [] as CustomMappersType);
+    }, [] as MappersType);
   }
 
   resolve(template: any, data: any, options: ResolveFunctionOptions | Function = {}) {
@@ -147,10 +147,10 @@ export default class Resolver {
         transformer: options
       } as ResolveFunctionOptions;
     } else {
-      const { customMappers, ...rest } = options as ResolveFunctionOptions;
+      const { mappers, ...rest } = options as ResolveFunctionOptions;
       options = {
         ...rest,
-        customMappers: Resolver.processCustomMappers(customMappers)
+        mappers: Resolver.processMappers(mappers)
       };
     }
     return this.resolveTemplate(template, data, options);

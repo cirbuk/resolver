@@ -286,7 +286,7 @@ Rules for transformer invocation are as follows
 1. Only one transformer will be called for a mapping
 2. Order of precedence of if transformers have been defined in multiple levels - mapping > `resolve()` > `new Resolver()`
 
-## transformMap
+## mappers
 
 ## API
 
