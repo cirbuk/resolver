@@ -13,7 +13,7 @@ export default [
 
     output: {
       //Change output library name
-      name: 'library',
+      name: 'resolver',
       file: pkg.browser,
       format: 'umd'
     },
