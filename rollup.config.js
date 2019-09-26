@@ -15,7 +15,10 @@ export default [
       //Change output library name
       name: 'resolver',
       file: pkg.browser,
-      format: 'umd'
+      format: 'umd',
+      global: {
+        "@kubric/litedash": "litedash"
+      }
     },
 
     external: ["@kubric/litedash"],
