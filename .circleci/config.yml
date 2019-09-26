@@ -5,7 +5,7 @@
 version: 2
 
 defaults: &defaults
-  working_directory: ~/repo
+  working_directory: ~/resolver
   docker:
     - image: circleci/node:10.16.0
 
@@ -34,13 +34,13 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - persist_to_workspace:
-          root: ~/repo
+          root: ~/resolver
           paths: .
   deploy:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: ~/repo
+          at: ~/resolver
       - run:
           name: Setup release directory
           command: |
