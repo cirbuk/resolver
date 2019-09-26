@@ -1,7 +1,7 @@
 {
-  "name": "library",
-  "version": "0.0.1",
-  "description": "A scaffolding project for JS libraries",
+  "name": "@kubric/resolver",
+  "version": "1.0.0",
+  "description": "Resolve marked up JavaScript object/array/string against a data object.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.js",
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cirbuk/jslib-scaffolding.git"
+    "url": "https://github.com/cirbuk/resolver.git"
   },
   "author": "Jophin Joseph",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/cirbuk/jslib-scaffolding/issues"
+    "url": "https://github.com/cirbuk/resolver/issues"
   },
-  "homepage": "https://github.com/cirbuk/jslib-scaffolding#readme",
+  "homepage": "https://github.com/cirbuk/resolver",
   "devDependencies": {
     "@babel/core": "7.5.5",
     "@babel/plugin-proposal-class-properties": "7.5.5",
