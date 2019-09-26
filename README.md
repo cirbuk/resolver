@@ -288,7 +288,7 @@ Rules for transformer invocation are as follows
 
 ## mappers
 
-The resolver's default behavior is to try and replace everything between `{{` and `}}` with values from the data json. `mappers` can be used to define other markup operators and their behavior.
+The resolver's default behavior is to try and replace everything between `{{` and `}}` with values from the data json. `mappers` can be used to define other markup operators.
 
 ```JavaScript
 import Resolver from "@kubric/json-resolver"
@@ -324,6 +324,7 @@ const template = {
 
 //Anything that is enclosed within [[ and ]] will be passed to the math evaluator
 const resolver = new Resolver({
+  //Anything enclosed between [[ and ]] will be sent to the math evaluator
   mappers: [
     [/\[\[(.+?)]]/g, evaluators.math]
   ]
@@ -337,7 +338,7 @@ const resolvedData = resolver.resolve(template, data);
 // }
 ```
 
-> `mappers` take effect only after standard mappings i.e. mappings between `{{` and `}}` are resolved and the transformer pipeline has been executed. The standard mapping operator cannot be overridden using custom mappers.
+> `mappers` take effect only after standard mappings(mappings between `{{` and `}}`) are resolved and the transformer pipeline has been executed. The standard mapping operator cannot be overridden using custom mappers.
 
 ## API
 
@@ -353,22 +354,16 @@ Property | Description | Remarks
 ---------|-------------|----------
 replaceUndefinedWith | If a mapping path does not exist or is marked as `undefined` in the data json, the value of that mapping is taken to be `undefined`. `replaceUndefinedWith` can be used to replace such missing mappings with a custom value. | optional
 ignoreUndefined | If `true`, mappings that do not exist or returns `undefined` from the data json will be ignored and left as is without resolving them. | optional <br/><br/> Default value: `false`.
-delimiter | Sets the delimiter pattern that is used to delimit between mapping, default value and type in a mapping string. | optional <br/><br/> Default value: `|`.
+transformer| Resolver instance level transformer can be defined here | optional <br/><br/> See [Transformers](#Transformers)
+mappers | Used to define custom markup operators and their behavior | optional <br/><br/> Refer [mappers](#mappers)
+delimiter | Sets the delimiter pattern that is used to delimit between mapping, default value and type in a mapping string. | optional <br/><br/> Default value: `|`
+fields | It accepts an object with string properties `mapping` and `transformer` whose values will replace `_mapping` and `_transformer` as the keywords while defining a transformer for a single mapping. | optional <br/><br/> Defaults to `{ mapping: "_mapping", tranformer: "_transformer" }`
 
-**transformer(mapping, value)**: `optional` Accepts a function which will be invoked for every mapping found, with the mapping 
-string and the value resolved for that mapping. Whatever is returned by this method then becomes the value that will be replaced
-in the template. <aside class="notice">Note: If a transformer is given, it will be called for every mapping found and 
-it becomes the responsibility of the transformer to return the correct value with which the mapping is to be replaced with</aside>
+### resolver.resolve(template, data, options)
 
-**fields**: `optional` Accepts the field names as an object with properties `mapping` and `transformer` for advanced mappings. Defaults to `_mapping` for the mapping field and `_transformer` for the transformer field. See section **Advanced Mapping** for more details. 
-
-### resolver.resolve()
-
-* **template**: `required` template JSON object containing the markup mappings that need to be resolved
-* **data**: `required` template JSON object containing the markup mappings that need to be resolved
-* **transformer**: `optional` This transformer overrides the transformer set(if any) while creating the object. Transformer function 
-passed to the resolve function will be valid only for that call to the function.
-
-
-
-  
+Property | Description | Remarks
+---------|-------------|----------
+template | JS object/string/array that needs to be resolved against `data` | required
+data | JSON object against which the `template` will be resolved | optional
+options.transformer | If defined, this function will be called to transform the value of every mapping defined in `template` except if there is an exclusive transformer defined for a mapping | optional <br/><br/> See [Transformers](#Transformers)
+options.mappers | If defined, will override the `mappers` defined at an instance level for that invocation of the `resolve()` function | optional <br/><br/> Refer [mappers](#mappers)
