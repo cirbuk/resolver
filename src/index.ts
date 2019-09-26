@@ -36,20 +36,20 @@ export default class Resolver {
       this.ignoreUndefined = ignoreUndefined;
     }
     this.transformer = transformer;
-    this.mappers = Resolver.processMappers(mappers);
+    this.mappers = Resolver._processMappers(mappers);
     const { mapping: mappingField, transformer: transformerField } = fields;
     this.mappingField = isValidString(mappingField) ? mappingField as string : "_mapping";
     this.transformerField = isValidString(transformerField) ? transformerField as string : "_transformer";
     this.delimiter = delimiter;
   }
 
-  getTransformedResult(dataKey: string, value: any, transformer: Function | undefined, match: string) {
+  _getTransformedResult(dataKey: string, value: any, transformer: Function | undefined, match: string) {
     value = !isUndefined(value) ? value : (this.ignoreUndefined ? match : this.replaceUndefinedWith);
     transformer = transformer || this.transformer;
     return isFunction(transformer) ? (transformer as Function)(value, dataKey) : value;
   }
 
-  static resolveMappers(srcStr: string, mappers: MappersType = []) {
+  static _resolveMappers(srcStr: string, mappers: MappersType = []) {
     return mappers.reduce((accStr, [regex, transformer]) => {
       if(!isString(accStr)) {
         return accStr;
@@ -70,7 +70,7 @@ export default class Resolver {
     }, srcStr);
   }
 
-  getValue(data: any, dataKey: string = '') {
+  _getValue(data: any, dataKey: string = '') {
     let [key, defaultValue, type = ''] = dataKey.split(this.delimiter);
     let finalDefaultValue: any = defaultValue;
     if(type === 'null') {
@@ -93,7 +93,7 @@ export default class Resolver {
     return value;
   }
 
-  hasMultipleMatches(templateStr: string) {
+  _hasMultipleMatches(templateStr: string) {
     const matches = templateStr.match(new RegExp(`^{{([^{}]+?)}}$`));
     if(matches !== null) {
       return matches;
@@ -106,34 +106,34 @@ export default class Resolver {
     }
   }
 
-  resolveString(templateStr: string, data: any, { transformer, mappers = [] }: ResolveFunctionOptions = {}) {
+  _resolveString(templateStr: string, data: any, { transformer, mappers = [] }: ResolveFunctionOptions = {}) {
     transformer = transformer || this.transformer;
     mappers = mappers || this.mappers;
     if(!isUndefined(data) || isFunction(transformer) || mappers.length > 0) {
       let resultString = templateStr;
-      const matches = this.hasMultipleMatches(templateStr);
+      const matches = this._hasMultipleMatches(templateStr);
       if(matches !== null) {
         const [match, dataKey] = matches;
-        resultString = this.getTransformedResult(dataKey, this.getValue(data, dataKey), transformer, match);
+        resultString = this._getTransformedResult(dataKey, this._getValue(data, dataKey), transformer, match);
       } else {
-        resultString = templateStr.replace(/{{(.+?)}}/g, (match, datakey) => this.getTransformedResult(datakey, this.getValue(data, datakey), transformer, match));
+        resultString = templateStr.replace(/{{(.+?)}}/g, (match, datakey) => this._getTransformedResult(datakey, this._getValue(data, datakey), transformer, match));
       }
-      resultString = mappers.length > 0 ? Resolver.resolveMappers(resultString, mappers) : resultString;
+      resultString = mappers.length > 0 ? Resolver._resolveMappers(resultString, mappers) : resultString;
       return resultString;
     } else {
       return templateStr;
     }
   };
 
-  resolveArray(templateArr: Array<any>, data: any, options?: ResolveFunctionOptions): Array<any> {
-    return templateArr.map(value => this.resolveTemplate(value, data, options));
+  _resolveArray(templateArr: Array<any>, data: any, options?: ResolveFunctionOptions): Array<any> {
+    return templateArr.map(value => this._resolveTemplate(value, data, options));
   }
 
-  resolveObject(template: Object, data: any, options?: ResolveFunctionOptions) {
-    return mapValues(template, (value: string) => this.resolveTemplate(value, data, options));
+  _resolveObject(template: Object, data: any, options?: ResolveFunctionOptions) {
+    return mapValues(template, (value: string) => this._resolveTemplate(value, data, options));
   }
 
-  static processMappers(mappers: MappersType = []) {
+  static _processMappers(mappers: MappersType = []) {
     return mappers.reduce((acc, [regex, transformer] = []) => {
       if(!isFunction(transformer)) {
         return acc;
@@ -157,27 +157,27 @@ export default class Resolver {
       const { mappers, ...rest } = options as ResolveFunctionOptions;
       options = {
         ...rest,
-        mappers: mappers ? Resolver.processMappers(mappers) : this.mappers
+        mappers: mappers ? Resolver._processMappers(mappers) : this.mappers
       };
     }
-    return this.resolveTemplate(template, data, options);
+    return this._resolveTemplate(template, data, options);
   };
 
-  resolveTemplate(template: any, data: any, options?: ResolveFunctionOptions): any {
+  _resolveTemplate(template: any, data: any, options?: ResolveFunctionOptions): any {
     if(Array.isArray(template)) {
-      return this.resolveArray(template, data, options);
+      return this._resolveArray(template, data, options);
     } else if(isString(template)) {
-      return this.resolveString(template, data, options);
+      return this._resolveString(template, data, options);
     } else if(isObject(template)) {
       const _mapping = template[this.mappingField];
       const _transformer = template[this.transformerField];
       if(Object.keys(template).length === 2 && _mapping && _transformer && isFunction(_transformer)) {
-        return this.resolveTemplate(_mapping, data, {
+        return this._resolveTemplate(_mapping, data, {
           ...options,
           transformer: _transformer
         });
       } else {
-        return this.resolveObject(template, data, options);
+        return this._resolveObject(template, data, options);
       }
     } else {
       return template;
