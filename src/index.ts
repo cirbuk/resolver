@@ -168,7 +168,7 @@ export default class Resolver {
       return this._resolveArray(template, data, options);
     } else if(isString(template)) {
       return this._resolveString(template, data, options);
-    } else if(isObject(template)) {
+    } else if(isPlainObject(template)) {
       const _mapping = template[this.mappingField];
       const _transformer = template[this.transformerField];
       if(Object.keys(template).length === 2 && _mapping && _transformer && isFunction(_transformer)) {
