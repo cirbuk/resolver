@@ -1,7 +1,6 @@
 import {
   get,
   isFunction,
-  isObject,
   isNull,
   isString,
   isUndefined,
@@ -90,40 +89,54 @@ export default class Resolver {
         value = isPlainObject(value) ? value : JSON.parse(value);
       }
     }
-    return value;
+    return {
+      key,
+      value
+    };
   }
 
-  _hasMultipleMatches(templateStr: string) {
-    const matches = templateStr.match(new RegExp(`^{{([^{}]+?)}}$`));
-    if(matches !== null) {
-      return matches;
-    } else if(!/^{{.*}}$/.test(templateStr)) {
-      return null;
-    } else {
-      const proposedDatakey = templateStr.replace(/^{{|}}$/g, "");
-      const [key, defaultValue, type] = proposedDatakey.split(this.delimiter);
-      return type === 'object' ? [templateStr, proposedDatakey] : null;
-    }
-  }
-
-  _resolveString(templateStr: string, data: any, { transformer, mappers = [] }: ResolveFunctionOptions = {}) {
+  _resolveString(str: string, data: any, { transformer, mappers = [] }: ResolveFunctionOptions = {}) {
     transformer = transformer || this.transformer;
     mappers = mappers || this.mappers;
-    if(!isUndefined(data) || isFunction(transformer) || mappers.length > 0) {
-      let resultString = templateStr;
-      const matches = this._hasMultipleMatches(templateStr);
-      if(matches !== null) {
-        const [match, dataKey] = matches;
-        resultString = this._getTransformedResult(dataKey, this._getValue(data, dataKey), transformer, match);
-      } else {
-        resultString = templateStr.replace(/{{(.+?)}}/g, (match, datakey) => this._getTransformedResult(datakey, this._getValue(data, datakey), transformer, match));
+    const resolve = (str: string, data: any, isFirst = true) => {
+      const regex = /{{|}}/g;
+      let statusFlag = 0, start = 0;
+      let result = regex.exec(str);
+      while(result !== null) {
+        const [match] = result;
+        if(statusFlag === 0) {
+          start = result.index;
+        }
+        match === "{{" ? statusFlag++ : ((match === "}}" && statusFlag > 0) ? statusFlag-- : statusFlag);
+        if(statusFlag === 0) {
+          const chunkToReplace = str.substring(start + 2, regex.lastIndex - 2);
+          const replaced = resolve(chunkToReplace, data, false);
+          if(start === 0 && regex.lastIndex === str.length) {
+            str = replaced;
+          } else {
+            let newStr = `${str.substring(0, start)}${replaced}`;
+            const nextSearchIndex = newStr.length;
+            newStr = `${newStr}${str.substring(regex.lastIndex)}`;
+            regex.lastIndex = nextSearchIndex;
+            str = newStr;
+          }
+        }
+        result = regex.exec(str);
       }
-      resultString = mappers.length > 0 ? Resolver._resolveMappers(resultString, mappers) : resultString;
-      return resultString;
-    } else {
-      return templateStr;
+      if(!isFirst) {
+        const { value: untransformedValue, key } = this._getValue(data, str);
+        return this._getTransformedResult(key, untransformedValue, transformer, `{{${str}}}`);
+      } else {
+        return str;
+      }
+    };
+    let finalValue = resolve(str, data);
+    if(mappers.length > 0) {
+      finalValue = Resolver._resolveMappers(finalValue, mappers)
     }
-  };
+
+    return finalValue;
+  }
 
   _resolveArray(templateArr: Array<any>, data: any, options?: ResolveFunctionOptions): Array<any> {
     return templateArr.map(value => this._resolveTemplate(value, data, options));

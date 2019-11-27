@@ -533,4 +533,40 @@ describe("Resolver", () => {
       value: `The value 3 transformed by the global transformer`
     });
   });
+
+  it("should resolve mappings inside mappings 1", () => {
+    const data = {
+      index: {
+        value: 2
+      },
+      array: ["one", "two", "three"]
+    };
+
+    const template = {
+      string: "{{array.{{index.value}}}}"
+    };
+
+    const resolver = new Resolver();
+    return expect(resolver.resolve(template, data)).toEqual({
+      string: "three"
+    });
+  });
+
+  it("should resolve mappings inside mappings 2", () => {
+    const data = {
+      index: {
+        value: 2
+      },
+      array: ["one", "two", "three"]
+    };
+
+    const template = {
+      string: "This is a string {{array.{{index.value}}}} that has a mapping in a mapping"
+    };
+
+    const resolver = new Resolver();
+    return expect(resolver.resolve(template, data)).toEqual({
+      string: "This is a string three that has a mapping in a mapping"
+    });
+  });
 });

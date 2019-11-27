@@ -1,5 +1,4 @@
 import Resolver from "../src";
-import math from "math-expression-evaluator";
 import _ from "lodash";
 
 describe("Resolver issues", () => {

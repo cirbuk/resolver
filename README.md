@@ -246,7 +246,7 @@ Transformers can be defined in the template when extracted data need to be trans
 In the template if any of the properties have as its value, an object with just the 2 properties `_mapping` and `_transformer` where `_transformer` is a function, then the resolver will resolve the mapping string from the data object and get the value resolved by passing it to the transformer function.
 
 ``` JavaScript
-import Resolver from "@kubric/json-resolver"
+import Resolver from "@kubric/resolver"
 
 const data = {
   isFormData: false,
@@ -286,12 +286,12 @@ Rules for transformer invocation are as follows
 1. Only one transformer will be called for a mapping
 2. Order of precedence of if transformers have been defined in multiple levels - mapping > `resolve()` > `new Resolver()`
 
-## mappers
+## Mappers
 
 The resolver's default behavior is to try and replace everything between `{{` and `}}` with values from the data json. `mappers` can be used to define other markup operators.
 
 ```JavaScript
-import Resolver from "@kubric/json-resolver"
+import Resolver from "@kubric/resolver"
 import math from "math-expression-evaluator";
 
 const data = {
@@ -339,6 +339,35 @@ const resolvedData = resolver.resolve(template, data);
 ```
 
 > `mappers` take effect only after standard mappings(mappings between `{{` and `}}`) are resolved and the transformer pipeline has been executed. The standard mapping operator cannot be overridden using custom mappers.
+
+## Nested mapping
+
+``` JavaScript
+import Resolver from "@kubric/resolver"
+
+//Data JSON
+const data = {
+  property: "value",
+  index: {
+    value: 2,
+    value1: 0
+  },
+  array: ["one", "two", ["3"]]
+};
+
+//Template JSON
+const template = {
+  string: "This is a string that has been resolved from a {{array.{{index.{{property}}||number}}.{{index.value1}}||number}} level nested mapping"
+};
+
+const resolver = new Resolver();
+const resolvedData = resolver.resolve(template, data);
+
+// resolvedData will be
+// {
+//   string: "This is a string that has been resolved from a 3 level nested mapping"
+// }
+```
 
 ## API
 
