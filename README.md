@@ -349,7 +349,7 @@ import Resolver from "@kubric/resolver"
 const data = {
   property: "value",
   index: {
-    value: 2,
+    value: "2",
     value1: 0
   },
   array: ["one", "two", ["3"]]
@@ -357,7 +357,8 @@ const data = {
 
 //Template JSON
 const template = {
-  string: "This is a string that has been resolved from a {{array.{{index.{{property}}||number}}.{{index.value1}}||number}} level nested mapping"
+  string: "This is a string that has been resolved from a " +
+    "{{array.{{index.{{property}}||number}}.{{index.value1}}||number}} level nested mapping"
 };
 
 const resolver = new Resolver();
@@ -367,6 +368,10 @@ const resolvedData = resolver.resolve(template, data);
 // {
 //   string: "This is a string that has been resolved from a 3 level nested mapping"
 // }
+// {{property}} - Resolves to "value" and the mapping becomes {{array.{{index.value||number}}.{{index.value1}}||number}}
+// {{index.value||number}} - Resolves to 2 and the mapping becomes {{array.2.{{index.value1}}||number}}
+// {{index.value1}} - Resolves to 0 and the mapping becomes {{array.2.0||number}}
+// {{array.2.0||number}} - Resolves to 3
 ```
 
 ## API
