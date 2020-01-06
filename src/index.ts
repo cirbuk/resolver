@@ -107,7 +107,7 @@ export default class Resolver {
         if(statusFlag === 0) {
           start = result.index;
         }
-        match === "{{" ? statusFlag++ : ((match === "}}" && statusFlag > 0) ? statusFlag-- : statusFlag);
+        match === "{{" ? statusFlag++ : ((match === "}}" && statusFlag > 0) ? statusFlag-- : (statusFlag = -1));
         if(statusFlag === 0) {
           const chunkToReplace = str.substring(start + 2, regex.lastIndex - 2);
           const replaced = resolve(chunkToReplace, data, false);
