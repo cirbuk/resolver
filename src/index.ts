@@ -102,6 +102,7 @@ export default class Resolver {
       const regex = /{{|}}/g;
       let statusFlag = 0, start = 0;
       let result = regex.exec(str);
+      let done = false;
       while(result !== null) {
         const [match] = result;
         if(statusFlag === 0) {
@@ -113,6 +114,7 @@ export default class Resolver {
           const replaced = resolve(chunkToReplace, data, false);
           if(start === 0 && regex.lastIndex === str.length) {
             str = replaced;
+            done = true;
           } else {
             let newStr = `${str.substring(0, start)}${replaced}`;
             const nextSearchIndex = newStr.length;
@@ -121,7 +123,7 @@ export default class Resolver {
             str = newStr;
           }
         }
-        result = regex.exec(str);
+        result = !done ? regex.exec(str) : null;
       }
       if(!isFirst) {
         const { value: untransformedValue, key } = this._getValue(data, str);
