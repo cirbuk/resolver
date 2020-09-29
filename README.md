@@ -392,6 +392,7 @@ transformer| Resolver instance level transformer can be defined here | optional 
 mappers | Used to define custom markup operators and their behavior | optional <br/><br/> Refer [mappers](#mappers)
 delimiter | Sets the delimiter pattern that is used to delimit between mapping, default value and type in a mapping string. | optional <br/><br/> Default value: `|`
 fields | It accepts an object with string properties `mapping` and `transformer` whose values will replace `_mapping` and `_transformer` as the keywords while defining a transformer for a single mapping. | optional <br/><br/> Defaults to `{ mapping: "_mapping", tranformer: "_transformer" }`
+overrideDefault | If `true`, will override the default resolver behavior i.e. it will avoid resolving content between `{{}}` and will rely entirely on the mappers for resolution. | optional <br/><br/> Default value: `false`
 
 ### resolver.resolve(template, data, options)
 
@@ -401,3 +402,4 @@ template | JS object/string/array that needs to be resolved against `data` | req
 data | JSON object against which the `template` will be resolved | optional
 options.transformer | If defined, this function will be called to transform the value of every mapping defined in `template` except if there is an exclusive transformer defined for a mapping | optional <br/><br/> See [Transformers](#Transformers)
 options.mappers | If defined, will override the `mappers` defined at an instance level for that invocation of the `resolve()` function | optional <br/><br/> Refer [mappers](#mappers)
+options.overrideDefault | If defined, will override the `overrideDefault` defined at an instance level for that invocation of the `resolve()` function | optional <br/><br/> Refer [options](#options)

@@ -13,10 +13,12 @@ export interface ResolverOptions {
   transformer?: Function,
   fields?: FieldsOption,
   mappers?: MappersType,
-  delimiter?: string
+  delimiter?: string,
+  overrideDefault?: boolean
 }
 
 export interface ResolveFunctionOptions {
   transformer?: Function,
-  mappers?: MappersType
+  mappers?: MappersType,
+  overrideDefault?: boolean
 }

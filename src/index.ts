@@ -1,12 +1,5 @@
 import {
-  get,
-  isFunction,
-  isNull,
-  isString,
-  isUndefined,
-  mapValues,
-  isValidString,
-  isPlainObject
+  get, isFunction, isNull, isString, isUndefined, mapValues, isValidString, isPlainObject
 } from "@kubric/litedash";
 import { ResolveFunctionOptions, ResolverOptions, TransformerType, MappersType } from "./interfaces";
 
@@ -18,6 +11,7 @@ export default class Resolver {
   mappers?: MappersType;
   ignoreUndefined?: boolean;
   delimiter: string;
+  overrideDefault: boolean;
 
   constructor({
                 replaceUndefinedWith,
@@ -28,10 +22,11 @@ export default class Resolver {
                   mapping: "_mapping",
                   transformer: "_transformer"
                 },
-                delimiter = '|'
+                delimiter = '|',
+                overrideDefault = false
               }: ResolverOptions = {}) {
     this.replaceUndefinedWith = replaceUndefinedWith;
-    if(isUndefined(this.replaceUndefinedWith)) {
+    if (isUndefined(this.replaceUndefinedWith)) {
       this.ignoreUndefined = ignoreUndefined;
     }
     this.transformer = transformer;
@@ -40,6 +35,7 @@ export default class Resolver {
     this.mappingField = isValidString(mappingField) ? mappingField as string : "_mapping";
     this.transformerField = isValidString(transformerField) ? transformerField as string : "_transformer";
     this.delimiter = delimiter;
+    this.overrideDefault = overrideDefault;
   }
 
   _getTransformedResult(dataKey: string, value: any, transformer: Function | undefined, match: string) {
@@ -50,15 +46,15 @@ export default class Resolver {
 
   static _resolveMappers(srcStr: string, mappers: MappersType = []) {
     return mappers.reduce((accStr, [regex, transformer]) => {
-      if(!isString(accStr)) {
+      if (!isString(accStr)) {
         return accStr;
       } else {
         const results = (regex as RegExp).exec(accStr);
-        if(isNull(results)) {
+        if (isNull(results)) {
           return accStr;
         } else {
           //@ts-ignore
-          if(results[0] !== accStr) {
+          if (results[0] !== accStr) {
             return accStr.replace(regex as RegExp, transformer as TransformerType);
           } else {
             //@ts-ignore
@@ -72,20 +68,20 @@ export default class Resolver {
   _getValue(data: any, dataKey: string = '') {
     let [key, defaultValue, type = ''] = dataKey.split(this.delimiter);
     let finalDefaultValue: any = defaultValue;
-    if(type === 'null') {
+    if (type === 'null') {
       finalDefaultValue = null;
     }
     let value = get(data, key, finalDefaultValue);
-    if(type.length > 0) {
-      if(type === "number") {
+    if (type.length > 0) {
+      if (type === "number") {
         value = +value;
-      } else if(type === "string") {
+      } else if (type === "string") {
         value = `${value}`;
-      } else if(type === "boolean") {
+      } else if (type === "boolean") {
         value = typeof value === "boolean" ? value : value === "true";
-      } else if(type === "array") {
+      } else if (type === "array") {
         value = Array.isArray(value) ? value : JSON.parse(value);
-      } else if(type === "object") {
+      } else if (type === "object") {
         value = isPlainObject(value) ? value : JSON.parse(value);
       }
     }
@@ -95,7 +91,8 @@ export default class Resolver {
     };
   }
 
-  _resolveString(str: string, data: any, { transformer, mappers = [] }: ResolveFunctionOptions = {}) {
+  _resolveString(str: string, data: any, { transformer, mappers = [], overrideDefault = false }: ResolveFunctionOptions = {}) {
+    overrideDefault = overrideDefault || this.overrideDefault;
     transformer = transformer || this.transformer;
     mappers = mappers || this.mappers;
     const resolve = (str: string, data: any, isFirst = true) => {
@@ -103,16 +100,16 @@ export default class Resolver {
       let statusFlag = 0, start = 0;
       let result = regex.exec(str);
       let done = false;
-      while(result !== null) {
+      while (result !== null) {
         const [match] = result;
-        if(statusFlag === 0) {
+        if (statusFlag === 0) {
           start = result.index;
         }
         match === "{{" ? statusFlag++ : ((match === "}}" && statusFlag > 0) ? statusFlag-- : (statusFlag = -1));
-        if(statusFlag === 0) {
+        if (statusFlag === 0) {
           const chunkToReplace = str.substring(start + 2, regex.lastIndex - 2);
           const replaced = resolve(chunkToReplace, data, false);
-          if(start === 0 && regex.lastIndex === str.length) {
+          if (start === 0 && regex.lastIndex === str.length) {
             str = replaced;
             done = true;
           } else {
@@ -125,15 +122,15 @@ export default class Resolver {
         }
         result = !done ? regex.exec(str) : null;
       }
-      if(!isFirst) {
+      if (!isFirst) {
         const { value: untransformedValue, key } = this._getValue(data, str);
         return this._getTransformedResult(key, untransformedValue, transformer, `{{${str}}}`);
       } else {
         return str;
       }
     };
-    let finalValue = resolve(str, data);
-    if(mappers.length > 0) {
+    let finalValue = !overrideDefault ? resolve(str, data) : str;
+    if (mappers.length > 0) {
       finalValue = Resolver._resolveMappers(finalValue, mappers)
     }
 
@@ -150,12 +147,12 @@ export default class Resolver {
 
   static _processMappers(mappers: MappersType = []) {
     return mappers.reduce((acc, [regex, transformer] = []) => {
-      if(!isFunction(transformer)) {
+      if (!isFunction(transformer)) {
         return acc;
       }
-      if(isString(regex)) {
+      if (isString(regex)) {
         return [...acc, [new RegExp(regex as string, "g"), transformer]];
-      } else if(regex.constructor === RegExp) {
+      } else if (regex.constructor === RegExp) {
         return [...acc, [regex, transformer]];
       } else {
         return acc;
@@ -164,7 +161,7 @@ export default class Resolver {
   }
 
   resolve(template: any, data: any, options: ResolveFunctionOptions | Function = {}) {
-    if(isFunction(options)) {
+    if (isFunction(options)) {
       options = {
         transformer: options
       } as ResolveFunctionOptions;
@@ -179,14 +176,14 @@ export default class Resolver {
   };
 
   _resolveTemplate(template: any, data: any, options?: ResolveFunctionOptions): any {
-    if(Array.isArray(template)) {
+    if (Array.isArray(template)) {
       return this._resolveArray(template, data, options);
-    } else if(isString(template)) {
+    } else if (isString(template)) {
       return this._resolveString(template, data, options);
-    } else if(isPlainObject(template)) {
+    } else if (isPlainObject(template)) {
       const _mapping = template[this.mappingField];
       const _transformer = template[this.transformerField];
-      if(Object.keys(template).length === 2 && _mapping && _transformer && isFunction(_transformer)) {
+      if (Object.keys(template).length === 2 && _mapping && _transformer && isFunction(_transformer)) {
         return this._resolveTemplate(_mapping, data, {
           ...options,
           transformer: _transformer

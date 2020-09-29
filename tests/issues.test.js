@@ -224,5 +224,45 @@ describe("Resolver issues", () => {
       uid: "123",
       bindings: JSON.stringify(bindings)
     });
-  })
+  });
+
+  it("Issue with mapping in analytics MM", () => {
+    const resolver = new Resolver();
+    const idMapping = field => ({
+      _mapping: `{{${field}}}`,
+      _transformer: id => id.split("/").pop()
+    });
+    const dataTemplate = {
+      "pid": idMapping("product"),
+      "iid": idMapping("image"),
+      "hasOriginalImage": "{{hasSavedImage}}"
+    };
+    const resolvedTemplate = resolver.resolve(dataTemplate, {
+      "product": "gid://shopify/Product/5364528251041",
+      "image": "gid://shopify/ProductImage/17932841582753",
+      "hasSavedImage": false,
+      "store": "garima-test-09"
+    });
+    return expect(resolvedTemplate).toEqual({
+      pid: "5364528251041",
+      iid: "17932841582753",
+      hasOriginalImage: false
+    });
+  });
+
+  it("Issue with query resolution in services", () => {
+    const resolver = new Resolver();
+    const template = "{{query}}";
+    const data = {
+      query: {
+        q: "test",
+        filter: [1, 2]
+      }
+    };
+    const resolvedTemplate = resolver.resolve(template, data);
+    return expect(resolvedTemplate).toEqual({
+      q: "test",
+      filter: [1, 2]
+    });
+  });
 });
