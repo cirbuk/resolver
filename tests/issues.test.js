@@ -266,3 +266,37 @@ describe("Resolver issues", () => {
     });
   });
 });
+
+describe("Issue with ignoreUndefined and type", () => {
+  let resolver;
+  beforeEach(() => {
+    resolver = new Resolver({
+      ignoreUndefined: true
+    });
+  });
+
+  it("should ignore undefined from being converted to 0 for number type when no default available", () => expect(resolver.resolve({
+    number: "{{numberValue||number}}"
+  }, {})).toEqual({
+    number: "{{numberValue||number}}"
+  }));
+
+  it("should ignore undefined from being converted to false for boolean type when no default available", () => expect(resolver.resolve({
+    bool: "{{booleanValue||boolean}}"
+  }, {})).toEqual({
+    bool: "{{booleanValue||boolean}}"
+  }));
+
+  it("should ignore undefined and take default for number even when ignoreUndefined is true", () => expect(resolver.resolve({
+    number: "{{numberValue|10|number}}"
+  }, {})).toEqual({
+    number: 10
+  }));
+
+  it("should ignore undefined and take default for boolean even when ignoreUndefined is true", () => expect(resolver.resolve({
+    bool: "{{booleanValue|true|boolean}}"
+  }, {})).toEqual({
+    bool: true
+  }));
+
+});

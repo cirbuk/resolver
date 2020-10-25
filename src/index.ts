@@ -71,8 +71,10 @@ export default class Resolver {
     if (type === 'null') {
       finalDefaultValue = null;
     }
-    let value = get(data, key, finalDefaultValue);
-    if (type.length > 0) {
+    let value = get(data, key, (isValidString(finalDefaultValue) || isNull(finalDefaultValue)) ? finalDefaultValue : undefined);
+    if (this.ignoreUndefined && isUndefined(value)) {
+      value = undefined;
+    } else if (type.length > 0) {
       if (type === "number") {
         value = +value;
       } else if (type === "string") {
