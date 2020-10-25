@@ -44,6 +44,6 @@
     "typescript": "3.5.3"
   },
   "dependencies": {
-    "@kubric/litedash": "^0.0.2"
+    "@kubric/litedash": "^0.0.3"
   }
 }
