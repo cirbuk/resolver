@@ -17,11 +17,11 @@ export default [
       file: pkg.browser,
       format: 'umd',
       global: {
-        "@kubric/litedash": "litedash"
+        "@kubric/utils": "litedash"
       }
     },
 
-    external: ["@kubric/litedash"],
+    external: ["@kubric/utils"],
 
     plugins: [
       //Remove if not a typescript library
@@ -58,7 +58,7 @@ export default [
         format: 'es'
       }
     ],
-    external: ["@kubric/litedash"],
+    external: ["@kubric/utils"],
     plugins: [
       //Remove if not a typescript library
       typescript()

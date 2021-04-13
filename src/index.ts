@@ -2,7 +2,6 @@ import {
   get, isFunction, isNull, isString, isUndefined, mapValues, isValidString, isPlainObject
 } from "@kubric/utils";
 import { ResolveFunctionOptions, ResolverOptions, TransformerType, MappersType } from "./interfaces";
-import { AnyObject } from "../../kubric-utils/src/utils";
 
 export default class Resolver {
   mappingField: string;
@@ -144,7 +143,7 @@ export default class Resolver {
     return templateArr.map(value => this._resolveTemplate(value, data, options));
   }
 
-  _resolveObject(template: AnyObject, data: any, options?: ResolveFunctionOptions) {
+  _resolveObject(template: { [index: string]: unknown }, data: any, options?: ResolveFunctionOptions) {
     return mapValues(template, (value: unknown) => this._resolveTemplate(value, data, options));
   }
 
