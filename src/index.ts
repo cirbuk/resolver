@@ -1,7 +1,8 @@
 import {
   get, isFunction, isNull, isString, isUndefined, mapValues, isValidString, isPlainObject
-} from "@kubric/litedash";
+} from "@kubric/utils";
 import { ResolveFunctionOptions, ResolverOptions, TransformerType, MappersType } from "./interfaces";
+import { AnyObject } from "../../kubric-utils/src/utils";
 
 export default class Resolver {
   mappingField: string;
@@ -76,15 +77,15 @@ export default class Resolver {
       value = undefined;
     } else if (type.length > 0) {
       if (type === "number") {
-        value = +value;
+        value = +(value as string);
       } else if (type === "string") {
         value = `${value}`;
       } else if (type === "boolean") {
         value = typeof value === "boolean" ? value : value === "true";
       } else if (type === "array") {
-        value = Array.isArray(value) ? value : JSON.parse(value);
+        value = Array.isArray(value) ? value : JSON.parse(value as string);
       } else if (type === "object") {
-        value = isPlainObject(value) ? value : JSON.parse(value);
+        value = isPlainObject(value) ? value : JSON.parse(value as string);
       }
     }
     return {
@@ -143,8 +144,8 @@ export default class Resolver {
     return templateArr.map(value => this._resolveTemplate(value, data, options));
   }
 
-  _resolveObject(template: Object, data: any, options?: ResolveFunctionOptions) {
-    return mapValues(template, (value: string) => this._resolveTemplate(value, data, options));
+  _resolveObject(template: AnyObject, data: any, options?: ResolveFunctionOptions) {
+    return mapValues(template, (value: unknown) => this._resolveTemplate(value, data, options));
   }
 
   static _processMappers(mappers: MappersType = []) {

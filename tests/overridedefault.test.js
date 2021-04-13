@@ -1,5 +1,5 @@
 import Resolver from "../src/index";
-import { isString } from "@kubric/litedash";
+import { isString } from "@kubric/utils";
 import sanitizeHTML from "sanitize-html";
 
 const resolver = new Resolver({
