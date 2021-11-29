@@ -496,3 +496,139 @@ const template = {
 describe("sanitizeJSON tests", () => {
   it("should sanitize", () => expect(sanitizeJSON(template)).toEqual(template));
 });
+
+const template1 = {
+  "id": "cards",
+  "name": "Card",
+  "styles": {
+    "display": "flex",
+    "flexDirection": "column"
+  },
+  "content": [
+    {
+      "id": "image",
+      "name": "Hero image",
+      "styles": {
+        "backgroundImage": "{{image.backgroundImage}}",
+        "height": 200,
+        "width": 200,
+        "backgroundSize": "cover",
+        "backgroundPosition": "center center"
+      }
+    },
+    {
+      "id": "details",
+      "name": "Image Details",
+      "styles": {
+        "padding": 12
+      },
+      "content": [
+        {
+          "id": "tag",
+          "name": "Tag text",
+          "styles": {
+            "background": "{{tag.background}}",
+            "fontSize": "{{tag.fontSize}}",
+            "color": "{{tag.color}}",
+            "padding": 5,
+            "borderRadius": 8,
+            "marginBottom": 10
+          },
+          "content": "{{tag.text}}"
+        },
+        {
+          "id": "heading",
+          "name": "Heading",
+          "styles": {
+            "color": "{{heading.color}}",
+            "fontSize": "{{heading.fontSize}}",
+            "marginBottom": 10
+          },
+          "content": "{{heading.text}}"
+        },
+        {
+          "id": "subheading",
+          "name": "Subheading",
+          "styles": {
+            "color": "{{subheading.color}}",
+            "fontSize": "{{subheading.fontSize}}"
+          },
+          "content": "{{subheading.text}}"
+        }
+      ]
+    }
+  ]
+}
+
+describe("overrideDefault issue", () => expect(resolver.resolve(template1, {},
+  {
+    mappers: [
+      [
+        /{{(.+?)}}/g,
+        (_, group) =>
+          `{{test.0.${group}}}`,
+      ],
+    ],
+  }
+)).toEqual({
+  "content": [
+    {
+      "id": "image",
+      "name": "Hero image",
+      "styles": {
+        "backgroundImage": "{{test.0.image.backgroundImage}}",
+        "backgroundPosition": "center center",
+        "backgroundSize": "cover",
+        "height": 200,
+        "width": 200
+      }
+    },
+    {
+      "content": [
+        {
+          "content": "{{test.0.tag.text}}",
+          "id": "tag",
+          "name": "Tag text",
+          "styles": {
+            "background": "{{test.0.tag.background}}",
+            "borderRadius": 8,
+            "color": "{{test.0.tag.color}}",
+            "fontSize": "{{test.0.tag.fontSize}}",
+            "marginBottom": 10,
+            "padding": 5
+          }
+        },
+        {
+          "content": "{{test.0.heading.text}}",
+          "id": "heading",
+          "name": "Heading",
+          "styles": {
+            "color": "{{test.0.heading.color}}",
+            "fontSize": "{{test.0.heading.fontSize}}",
+            "marginBottom": 10
+          }
+        },
+        {
+          "content": "{{test.0.subheading.text}}",
+          "id": "subheading",
+          "name": "Subheading",
+          "styles": {
+            "color": "{{test.0.subheading.color}}",
+            "fontSize": "{{test.0.subheading.fontSize}}"
+          }
+        }
+      ],
+      "id": "details",
+      "name": "Image Details",
+      "styles": {
+        "padding": 12
+      }
+    }
+  ],
+  "id": "cards",
+  "name": "Card",
+  "styles": {
+    "display": "flex",
+    "flexDirection": "column"
+  }
+}));

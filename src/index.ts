@@ -49,6 +49,7 @@ export default class Resolver {
       if (!isString(accStr)) {
         return accStr;
       } else {
+        (regex as RegExp).lastIndex = 0;
         const results = (regex as RegExp).exec(accStr);
         if (isNull(results)) {
           return accStr;
