@@ -298,5 +298,4 @@ describe("Issue with ignoreUndefined and type", () => {
   }, {})).toEqual({
     bool: true
   }));
-
 });

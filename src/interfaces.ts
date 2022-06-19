@@ -14,7 +14,8 @@ export interface ResolverOptions {
   fields?: FieldsOption,
   mappers?: MappersType,
   delimiter?: string,
-  overrideDefault?: boolean
+  overrideDefault?: boolean,
+  ignoreEmptyMapping?: boolean
 }
 
 export interface ResolveFunctionOptions {

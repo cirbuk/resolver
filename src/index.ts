@@ -12,6 +12,7 @@ export default class Resolver {
   ignoreUndefined?: boolean;
   delimiter: string;
   overrideDefault: boolean;
+  ignoreEmptyMapping: boolean;
 
   constructor({
                 replaceUndefinedWith,
@@ -23,9 +24,11 @@ export default class Resolver {
                   transformer: "_transformer"
                 },
                 delimiter = '|',
-                overrideDefault = false
+                overrideDefault = false,
+                ignoreEmptyMapping = false
               }: ResolverOptions = {}) {
     this.replaceUndefinedWith = replaceUndefinedWith;
+    this.ignoreEmptyMapping = ignoreEmptyMapping;
     if (isUndefined(this.replaceUndefinedWith)) {
       this.ignoreUndefined = ignoreUndefined;
     }
@@ -39,7 +42,11 @@ export default class Resolver {
   }
 
   _getTransformedResult(dataKey: string, value: any, transformer: Function | undefined, match: string) {
-    value = !isUndefined(value) ? value : (this.ignoreUndefined ? match : this.replaceUndefinedWith);
+    if (this.ignoreEmptyMapping && !isValidString(dataKey)) {
+      value = match;
+    } else if (isUndefined(value)) {
+      value = this.ignoreUndefined ? match : this.replaceUndefinedWith;
+    }
     transformer = transformer || this.transformer;
     return isFunction(transformer) ? (transformer as Function)(value, dataKey) : value;
   }
@@ -94,7 +101,11 @@ export default class Resolver {
     };
   }
 
-  _resolveString(str: string, data: any, { transformer, mappers = [], overrideDefault = false }: ResolveFunctionOptions = {}) {
+  _resolveString(str: string, data: any, {
+    transformer,
+    mappers = [],
+    overrideDefault = false
+  }: ResolveFunctionOptions = {}) {
     overrideDefault = overrideDefault || this.overrideDefault;
     transformer = transformer || this.transformer;
     mappers = mappers || this.mappers;
