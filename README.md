@@ -1,4 +1,4 @@
-# resolver
+# @kubric/resolver [![Featured on Openbase](https://badges.openbase.com/js/featured/@kubric/resolver.svg?token=m+Bkj60K0yPw2QwDOfri1OEKW5h9Bb7/46p+sopfaec=)](https://openbase.com/js/@kubric/resolver?utm_source=embedded&amp;utm_medium=badge&amp;utm_campaign=rate-badge)
 
 Resolver is capable of resolving any marked up JavaScript object/array/string against a data object.
 
