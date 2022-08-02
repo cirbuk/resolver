@@ -961,10 +961,10 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@kubric/utils@^1.0.5":
-  "integrity" "sha512-Y0hp1evoR4+7HYnrRr+bicTFcYxv8U1Qb453AkMK2FKVhLfZZ15vQDHnslA9opg3XFIm+gGoM9Dm5qV+/rS4RA=="
-  "resolved" "https://registry.npmjs.org/@kubric/utils/-/utils-1.0.5.tgz"
-  "version" "1.0.5"
+"@kubric/utils@^1.0.6":
+  "integrity" "sha512-HECXYvxpdS2rrDw7oheRLjQMKH03xn/PRTMYdCCJt1kOi1jFwh4G2id1vErMAIgQvLmDHNmK7genKkh1QzWWgw=="
+  "resolved" "https://registry.npmjs.org/@kubric/utils/-/utils-1.0.6.tgz"
+  "version" "1.0.6"
 
 "@nodelib/fs.scandir@2.1.5":
   "integrity" "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="
