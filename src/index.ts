@@ -247,7 +247,7 @@ export default class Resolver {
 
   resolve(
     template: unknown,
-    data: unknown,
+    data?: unknown,
     options: ResolveFunctionOptions | TransformerFunction = {}
   ): unknown {
     if (isFunction(options)) {
@@ -294,5 +294,27 @@ export default class Resolver {
       return this._resolveObject(temp, data, options);
     }
     return template;
+  }
+
+  /**
+   * Parses the template and returns true if it has at least 1 mapping. Returns as soon as a mapping is found.
+   * @param template: JS object with mappings
+   */
+  static hasAnyMapping(template: unknown): boolean {
+    let hasMapping = false;
+    const resolver = new Resolver({
+      transformer(): void {
+        hasMapping = true;
+      },
+    });
+    if (isValidString(template)) {
+      resolver.resolve(template);
+    } else if (Array.isArray(template)) {
+      return template.some((e) => Resolver.hasAnyMapping(e));
+    } else if (isPlainObject(template)) {
+      const temp = template as Record<string, unknown>;
+      return Object.keys(temp).some((key) => Resolver.hasAnyMapping(temp[key]));
+    }
+    return hasMapping;
   }
 }
