@@ -1,32 +1,53 @@
 import {
-  get, isFunction, isNull, isString, isUndefined, mapValues, isValidString, isPlainObject
-} from "@kubric/utils";
-import { ResolveFunctionOptions, ResolverOptions, TransformerType, MappersType } from "./interfaces";
+  get,
+  isFunction,
+  isNull,
+  isString,
+  isUndefined,
+  mapValues,
+  isValidString,
+  isPlainObject,
+} from '@kubric/utils';
+import {
+  ResolveFunctionOptions,
+  ResolverOptions,
+  MappersType,
+  TransformerFunction,
+  MapperTransformerType,
+} from './types';
 
 export default class Resolver {
   mappingField: string;
-  replaceUndefinedWith?: any;
+
+  replaceUndefinedWith?: unknown;
+
   transformerField: string;
-  transformer?: Function;
+
+  transformer?: TransformerFunction;
+
   mappers?: MappersType;
+
   ignoreUndefined?: boolean;
+
   delimiter: string;
+
   overrideDefault: boolean;
+
   ignoreEmptyMapping: boolean;
 
   constructor({
-                replaceUndefinedWith,
-                ignoreUndefined = false,
-                transformer,
-                mappers,
-                fields = {
-                  mapping: "_mapping",
-                  transformer: "_transformer"
-                },
-                delimiter = '|',
-                overrideDefault = false,
-                ignoreEmptyMapping = false
-              }: ResolverOptions = {}) {
+    replaceUndefinedWith,
+    ignoreUndefined = false,
+    transformer,
+    mappers,
+    fields = {
+      mapping: '_mapping',
+      transformer: '_transformer',
+    },
+    delimiter = '|',
+    overrideDefault = false,
+    ignoreEmptyMapping = false,
+  }: ResolverOptions = {}) {
     this.replaceUndefinedWith = replaceUndefinedWith;
     this.ignoreEmptyMapping = ignoreEmptyMapping;
     if (isUndefined(this.replaceUndefinedWith)) {
@@ -34,84 +55,113 @@ export default class Resolver {
     }
     this.transformer = transformer;
     this.mappers = Resolver._processMappers(mappers);
-    const { mapping: mappingField, transformer: transformerField } = fields;
-    this.mappingField = isValidString(mappingField) ? mappingField as string : "_mapping";
-    this.transformerField = isValidString(transformerField) ? transformerField as string : "_transformer";
+    const {mapping: mappingField, transformer: transformerField} = fields;
+    this.mappingField = isValidString(mappingField)
+      ? (mappingField as string)
+      : '_mapping';
+    this.transformerField = isValidString(transformerField)
+      ? (transformerField as string)
+      : '_transformer';
     this.delimiter = delimiter;
     this.overrideDefault = overrideDefault;
   }
 
-  _getTransformedResult(dataKey: string, value: any, propName: string, transformer: Function | undefined, match: string) {
+  _getTransformedResult(
+    dataKey: string,
+    value: unknown,
+    propName: string,
+    path: string,
+    transformer: TransformerFunction | undefined,
+    match: string
+  ): unknown {
     if (this.ignoreEmptyMapping && !isValidString(dataKey)) {
       value = match;
     } else if (isUndefined(value)) {
       value = this.ignoreUndefined ? match : this.replaceUndefinedWith;
     }
     transformer = transformer || this.transformer;
-    return isFunction(transformer) ? (transformer as Function)(value, dataKey, propName) : value;
+    return isFunction(transformer)
+      ? transformer(value, dataKey, propName, path)
+      : value;
   }
 
-  static _resolveMappers(srcStr: string, mappers: MappersType = []) {
+  static _resolveMappers(srcStr: string, mappers: MappersType = []): string {
     return mappers.reduce((accStr, [regex, transformer]) => {
       if (!isString(accStr)) {
         return accStr;
-      } else {
-        (regex as RegExp).lastIndex = 0;
-        const results = (regex as RegExp).exec(accStr);
-        if (isNull(results)) {
-          return accStr;
-        } else {
-          //@ts-ignore
-          if (results[0] !== accStr) {
-            return accStr.replace(regex as RegExp, transformer as TransformerType);
-          } else {
-            //@ts-ignore
-            return (transformer as TransformerType)(...results);
-          }
-        }
       }
+      const regexp = regex as RegExp;
+      const trans = transformer as MapperTransformerType;
+      regexp.lastIndex = 0;
+      const results = regexp.exec(accStr);
+      if (isNull(results)) {
+        return accStr;
+      }
+      if (results[0] !== accStr) {
+        return accStr.replace(regexp, trans);
+      }
+      return trans(...results);
     }, srcStr);
   }
 
-  _getValue(data: any, dataKey: string = '') {
-    let [key, defaultValue, type = ''] = dataKey.split(this.delimiter);
-    let finalDefaultValue: any = defaultValue;
+  _getValue(
+    data: unknown,
+    dataKey = ''
+  ): {
+    key: string;
+    value: unknown;
+  } {
+    const [key, defaultValue, type = ''] = dataKey.split(this.delimiter);
+    let finalDefaultValue: unknown = defaultValue;
     if (type === 'null') {
       finalDefaultValue = null;
     }
-    let value = get(data, key, (isValidString(finalDefaultValue) || isNull(finalDefaultValue)) ? finalDefaultValue : undefined);
+    let value = get(
+      data,
+      key,
+      isValidString(finalDefaultValue) || isNull(finalDefaultValue)
+        ? finalDefaultValue
+        : undefined
+    );
     if (this.ignoreUndefined && isUndefined(value)) {
       value = undefined;
     } else if (type.length > 0) {
-      if (type === "number") {
+      if (type === 'number') {
         value = +(value as string);
-      } else if (type === "string") {
+      } else if (type === 'string') {
         value = `${value}`;
-      } else if (type === "boolean") {
-        value = typeof value === "boolean" ? value : value === "true";
-      } else if (type === "array") {
+      } else if (type === 'boolean') {
+        value = typeof value === 'boolean' ? value : value === 'true';
+      } else if (type === 'array') {
         value = Array.isArray(value) ? value : JSON.parse(value as string);
-      } else if (type === "object") {
+      } else if (type === 'object') {
         value = isPlainObject(value) ? value : JSON.parse(value as string);
       }
     }
     return {
       key,
-      value
+      value,
     };
   }
 
-  _resolveString(str: string, data: any, propName: string, {
-    transformer,
-    mappers = [],
-    overrideDefault = false
-  }: ResolveFunctionOptions = {}) {
+  _resolveString(
+    str: string,
+    data: unknown,
+    propName: string,
+    path = '',
+    {
+      transformer,
+      mappers = [],
+      overrideDefault = false,
+    }: ResolveFunctionOptions = {}
+  ): unknown {
     overrideDefault = overrideDefault || this.overrideDefault;
     transformer = transformer || this.transformer;
     mappers = mappers || this.mappers;
-    const resolve = (str: string, data: any, isFirst = true) => {
+    const resolve = (str: string, data: unknown, isFirst = true): string => {
       const regex = /{{|}}/g;
-      let statusFlag = 0, start = 0;
+      let statusFlag = 0;
+      let start = 0;
       let result = regex.exec(str);
       let done = false;
       while (result !== null) {
@@ -119,12 +169,18 @@ export default class Resolver {
         if (statusFlag === 0) {
           start = result.index;
         }
-        match === "{{" ? statusFlag++ : ((match === "}}" && statusFlag > 0) ? statusFlag-- : (statusFlag = -1));
+        if (match === '{{') {
+          statusFlag += 1;
+        } else if (match === '}}' && statusFlag > 0) {
+          statusFlag -= 1;
+        } else {
+          statusFlag = -1;
+        }
         if (statusFlag === 0) {
           const chunkToReplace = str.substring(start + 2, regex.lastIndex - 2);
           const replaced = resolve(chunkToReplace, data, false);
           if (start === 0 && regex.lastIndex === str.length) {
-            str = replaced;
+            str = replaced as string;
             done = true;
           } else {
             let newStr = `${str.substring(0, start)}${replaced}`;
@@ -137,76 +193,146 @@ export default class Resolver {
         result = !done ? regex.exec(str) : null;
       }
       if (!isFirst) {
-        const { value: untransformedValue, key } = this._getValue(data, str);
-        return this._getTransformedResult(key, untransformedValue, propName, transformer, `{{${str}}}`);
-      } else {
-        return str;
+        const {value: untransformedValue, key} = this._getValue(data, str);
+        return this._getTransformedResult(
+          key,
+          untransformedValue,
+          propName,
+          path.replace(/^./, ''),
+          transformer,
+          `{{${str}}}`
+        ) as string;
       }
+      return str;
     };
     let finalValue = !overrideDefault ? resolve(str, data) : str;
     if (mappers.length > 0) {
-      finalValue = Resolver._resolveMappers(finalValue, mappers)
+      finalValue = Resolver._resolveMappers(finalValue, mappers);
     }
 
     return finalValue;
   }
 
-  _resolveArray(templateArr: Array<any>, data: any, options?: ResolveFunctionOptions): Array<any> {
-    return templateArr.map(value => this._resolveTemplate(value, data, "", options));
+  _resolveArray(
+    templateArr: unknown[],
+    data: unknown,
+    path = '',
+    options?: ResolveFunctionOptions
+  ): unknown[] {
+    return templateArr.map((value, index) =>
+      this._resolveTemplate(
+        value,
+        data,
+        `${index}`,
+        `${path}.${index}`,
+        options
+      )
+    );
   }
 
-  _resolveObject(template: { [index: string]: unknown }, data: any, options?: ResolveFunctionOptions) {
-    return mapValues(template, (value: unknown, propName) => this._resolveTemplate(value, data, propName, options));
+  _resolveObject(
+    template: Record<string, unknown>,
+    data: unknown,
+    path = '',
+    options?: ResolveFunctionOptions
+  ): Record<string, unknown> {
+    return mapValues(template, (value: unknown, propName) =>
+      this._resolveTemplate(
+        value,
+        data,
+        propName,
+        `${path}.${propName}`,
+        options
+      )
+    );
   }
 
-  static _processMappers(mappers: MappersType = []) {
-    return mappers.reduce((acc, [regex, transformer] = []) => {
+  static _processMappers(mappers: MappersType = []): MappersType {
+    return mappers.reduce((acc, [regex, transformer]) => {
       if (!isFunction(transformer)) {
         return acc;
       }
       if (isString(regex)) {
-        return [...acc, [new RegExp(regex as string, "g"), transformer]];
-      } else if (regex.constructor === RegExp) {
-        return [...acc, [regex, transformer]];
-      } else {
-        return acc;
+        return [...acc, [new RegExp(regex as string, 'g'), transformer]];
       }
+      if (regex.constructor === RegExp) {
+        return [...acc, [regex, transformer]];
+      }
+      return acc;
     }, [] as MappersType);
   }
 
-  resolve(template: any, data: any, options: ResolveFunctionOptions | Function = {}) {
+  resolve(
+    template: unknown,
+    data?: unknown,
+    options: ResolveFunctionOptions | TransformerFunction = {}
+  ): any {
     if (isFunction(options)) {
       options = {
-        transformer: options
+        transformer: options,
       } as ResolveFunctionOptions;
     } else {
-      const { mappers, ...rest } = options as ResolveFunctionOptions;
+      const {mappers, ...rest} = options as ResolveFunctionOptions;
       options = {
         ...rest,
-        mappers: mappers ? Resolver._processMappers(mappers) : this.mappers
+        mappers: mappers ? Resolver._processMappers(mappers) : this.mappers,
       };
     }
-    return this._resolveTemplate(template, data, "", options);
-  };
+    return this._resolveTemplate(template, data, '', '', options);
+  }
 
-  _resolveTemplate(template: any, data: any, propName: string, options?: ResolveFunctionOptions): any {
+  _resolveTemplate(
+    template: unknown,
+    data: unknown,
+    propName: string,
+    path = '',
+    options?: ResolveFunctionOptions
+  ): unknown {
     if (Array.isArray(template)) {
-      return this._resolveArray(template, data, options);
-    } else if (isString(template)) {
-      return this._resolveString(template, data, propName, options);
-    } else if (isPlainObject(template)) {
-      const _mapping = template[this.mappingField];
-      const _transformer = template[this.transformerField];
-      if (Object.keys(template).length === 2 && _mapping && _transformer && isFunction(_transformer)) {
-        return this._resolveTemplate(_mapping, data, propName, {
-          ...options,
-          transformer: _transformer
-        });
-      } else {
-        return this._resolveObject(template, data, options);
-      }
-    } else {
-      return template;
+      return this._resolveArray(template, data, path, options);
     }
+    if (isString(template)) {
+      return this._resolveString(template, data, propName, path, options);
+    }
+    if (isPlainObject(template)) {
+      const temp = template as Record<string, unknown>;
+      const mappingString = temp[this.mappingField];
+      const mappingTransformer = temp[this.transformerField];
+      if (
+        Object.keys(temp).length === 2 &&
+        mappingString &&
+        mappingTransformer &&
+        isFunction(mappingTransformer)
+      ) {
+        return this._resolveTemplate(mappingString, data, propName, path, {
+          ...options,
+          transformer: mappingTransformer,
+        });
+      }
+      return this._resolveObject(temp, data, path, options);
+    }
+    return template;
+  }
+
+  /**
+   * Parses the template and returns true if it has at least 1 mapping. Returns as soon as a mapping is found.
+   * @param template: JS object with mappings
+   */
+  static hasAnyMapping(template: unknown): boolean {
+    let hasMapping = false;
+    const resolver = new Resolver({
+      transformer(): void {
+        hasMapping = true;
+      },
+    });
+    if (isValidString(template)) {
+      resolver.resolve(template);
+    } else if (Array.isArray(template)) {
+      return template.some((e) => Resolver.hasAnyMapping(e));
+    } else if (isPlainObject(template)) {
+      const temp = template as Record<string, unknown>;
+      return Object.keys(temp).some((key) => Resolver.hasAnyMapping(temp[key]));
+    }
+    return hasMapping;
   }
 }
