@@ -1,4 +1,3 @@
-export type TransformerType = (match: string, ...parts: any[]) => string;
 export type MapperTransformerType = (...args: string[]) => string;
 export type MappersEntryType = [RegExp | string, MapperTransformerType];
 export type MappersType = MappersEntryType[];
@@ -11,7 +10,8 @@ export interface FieldsOption {
 export type TransformerFunction = (
   value: unknown,
   dataPath: string,
-  propName: string
+  propName: string,
+  path: string
 ) => unknown;
 
 export interface ResolverOptions {

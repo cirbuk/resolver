@@ -200,4 +200,42 @@ describe('transformer cases', () => {
       },
     });
   });
+  it('should pass paths to transformer', () => {
+    const data = {
+      value: 3,
+    };
+
+    const template = {
+      prop1: '{{value}}',
+      test: {
+        prop2: '{{value}}',
+      },
+      array: ['{{value}}'],
+      objArray: [
+        {
+          hello: 'test',
+        },
+        {
+          nestedArray: [
+            {
+              prop3: '{{value}}',
+            },
+          ],
+        },
+      ],
+    };
+    const receivedSet = {};
+    const resolver = new Resolver({
+      transformer(value, mapping, propName, path) {
+        receivedSet[propName] = path;
+      },
+    });
+    resolver.resolve(template, data);
+    return expect(receivedSet).toEqual({
+      prop1: 'prop1',
+      prop2: 'test.prop2',
+      0: 'array.0',
+      prop3: 'objArray.1.nestedArray.0.prop3',
+    });
+  });
 });

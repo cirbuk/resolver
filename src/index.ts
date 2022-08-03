@@ -70,6 +70,7 @@ export default class Resolver {
     dataKey: string,
     value: unknown,
     propName: string,
+    path: string,
     transformer: TransformerFunction | undefined,
     match: string
   ): unknown {
@@ -80,7 +81,7 @@ export default class Resolver {
     }
     transformer = transformer || this.transformer;
     return isFunction(transformer)
-      ? transformer(value, dataKey, propName)
+      ? transformer(value, dataKey, propName, path)
       : value;
   }
 
@@ -147,6 +148,7 @@ export default class Resolver {
     str: string,
     data: unknown,
     propName: string,
+    path = '',
     {
       transformer,
       mappers = [],
@@ -196,6 +198,7 @@ export default class Resolver {
           key,
           untransformedValue,
           propName,
+          path.replace(/^./, ''),
           transformer,
           `{{${str}}}`
         ) as string;
@@ -213,20 +216,34 @@ export default class Resolver {
   _resolveArray(
     templateArr: unknown[],
     data: unknown,
+    path = '',
     options?: ResolveFunctionOptions
   ): unknown[] {
-    return templateArr.map((value) =>
-      this._resolveTemplate(value, data, '', options)
+    return templateArr.map((value, index) =>
+      this._resolveTemplate(
+        value,
+        data,
+        `${index}`,
+        `${path}.${index}`,
+        options
+      )
     );
   }
 
   _resolveObject(
     template: Record<string, unknown>,
     data: unknown,
+    path = '',
     options?: ResolveFunctionOptions
   ): Record<string, unknown> {
     return mapValues(template, (value: unknown, propName) =>
-      this._resolveTemplate(value, data, propName, options)
+      this._resolveTemplate(
+        value,
+        data,
+        propName,
+        `${path}.${propName}`,
+        options
+      )
     );
   }
 
@@ -249,7 +266,7 @@ export default class Resolver {
     template: unknown,
     data?: unknown,
     options: ResolveFunctionOptions | TransformerFunction = {}
-  ): unknown {
+  ): any {
     if (isFunction(options)) {
       options = {
         transformer: options,
@@ -261,20 +278,21 @@ export default class Resolver {
         mappers: mappers ? Resolver._processMappers(mappers) : this.mappers,
       };
     }
-    return this._resolveTemplate(template, data, '', options);
+    return this._resolveTemplate(template, data, '', '', options);
   }
 
   _resolveTemplate(
     template: unknown,
     data: unknown,
     propName: string,
+    path = '',
     options?: ResolveFunctionOptions
   ): unknown {
     if (Array.isArray(template)) {
-      return this._resolveArray(template, data, options);
+      return this._resolveArray(template, data, path, options);
     }
     if (isString(template)) {
-      return this._resolveString(template, data, propName, options);
+      return this._resolveString(template, data, propName, path, options);
     }
     if (isPlainObject(template)) {
       const temp = template as Record<string, unknown>;
@@ -286,12 +304,12 @@ export default class Resolver {
         mappingTransformer &&
         isFunction(mappingTransformer)
       ) {
-        return this._resolveTemplate(mappingString, data, propName, {
+        return this._resolveTemplate(mappingString, data, propName, path, {
           ...options,
           transformer: mappingTransformer,
         });
       }
-      return this._resolveObject(temp, data, options);
+      return this._resolveObject(temp, data, path, options);
     }
     return template;
   }
