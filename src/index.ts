@@ -336,3 +336,9 @@ export default class Resolver {
     return hasMapping;
   }
 }
+
+export type {
+  ResolverOptions,
+  ResolveFunctionOptions,
+  TransformerFunction,
+} from './types';
