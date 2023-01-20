@@ -11,7 +11,8 @@ export type TransformerFunction = (
   value: unknown,
   dataPath: string,
   propName: string,
-  path: string
+  path: string,
+  match: string
 ) => unknown;
 
 export interface ResolverOptions {
