@@ -81,7 +81,7 @@ export default class Resolver {
     }
     transformer = transformer || this.transformer;
     return isFunction(transformer)
-      ? transformer(value, dataKey, propName, path)
+      ? transformer(value, dataKey, propName, path, match)
       : value;
   }
 

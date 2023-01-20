@@ -175,6 +175,27 @@ describe('transformer cases', () => {
     });
   });
 
+  it('should call global transformer with original match in the 5th argument', () => {
+    const template = {
+      value: '{{value|0|number}}',
+    };
+
+    const resolver = new Resolver({
+      transformer(...args) {
+        const {4: mapping} = args;
+        if (mapping === template.value) {
+          return `The original mapping ${mapping} is returned by the global transformer`;
+        }
+
+        return false;
+      },
+    });
+    const resolvedData = resolver.resolve(template, {});
+    return expect(resolvedData).toEqual({
+      value: `The original mapping {{value|0|number}} is returned by the global transformer`,
+    });
+  });
+
   it('should pass property name to transformer', () => {
     const data = {
       value: 3,
