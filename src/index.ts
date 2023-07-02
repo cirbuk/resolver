@@ -36,18 +36,18 @@ export default class Resolver {
   ignoreEmptyMapping: boolean;
 
   constructor({
-    replaceUndefinedWith,
-    ignoreUndefined = false,
-    transformer,
-    mappers,
-    fields = {
-      mapping: '_mapping',
-      transformer: '_transformer',
-    },
-    delimiter = '|',
-    overrideDefault = false,
-    ignoreEmptyMapping = false,
-  }: ResolverOptions = {}) {
+                replaceUndefinedWith,
+                ignoreUndefined = false,
+                transformer,
+                mappers,
+                fields = {
+                  mapping: '_mapping',
+                  transformer: '_transformer',
+                },
+                delimiter = '|',
+                overrideDefault = false,
+                ignoreEmptyMapping = false,
+              }: ResolverOptions = {}) {
     this.replaceUndefinedWith = replaceUndefinedWith;
     this.ignoreEmptyMapping = ignoreEmptyMapping;
     if (isUndefined(this.replaceUndefinedWith)) {
@@ -85,7 +85,11 @@ export default class Resolver {
       : value;
   }
 
-  static _resolveMappers(srcStr: string, mappers: MappersType = []): string {
+  static _resolveMappers(
+    srcStr: string,
+    mappers: MappersType = [],
+    data: any
+  ): string {
     return mappers.reduce((accStr, [regex, transformer]) => {
       if (!isString(accStr)) {
         return accStr;
@@ -98,7 +102,9 @@ export default class Resolver {
         return accStr;
       }
       if (results[0] !== accStr) {
-        return accStr.replace(regexp, trans);
+        return accStr.replace(regexp, (...args) =>
+          trans(args[0], args[1], data, ...args.slice(2))
+        );
       }
       return trans(...results);
     }, srcStr);
@@ -207,7 +213,7 @@ export default class Resolver {
     };
     let finalValue = !overrideDefault ? resolve(str, data) : str;
     if (mappers.length > 0) {
-      finalValue = Resolver._resolveMappers(finalValue, mappers);
+      finalValue = Resolver._resolveMappers(finalValue, mappers, data);
     }
 
     return finalValue;

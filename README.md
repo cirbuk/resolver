@@ -302,7 +302,9 @@ const data = {
 };
 
 const evaluators = {
-  math: (match, formula) => {
+  // "data" is the data that has been passed for resolution to the resolve() 
+  // call
+  math: (match, formula, data) => {
     try {
       return +math.eval(formula);
     } catch (ex) {
