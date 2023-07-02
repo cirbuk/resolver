@@ -44,7 +44,7 @@ describe('Mappers tests', () => {
     );
     return expect(
       typeof resolvedData.ad._transformer === 'function' &&
-      resolvedData.ad._transformer === transformers.json
+        resolvedData.ad._transformer === transformers.json
     ).toEqual(true);
   });
 
@@ -175,7 +175,7 @@ describe('Mappers tests', () => {
     const resolvedData = resolver.resolve(template, data);
     return expect(resolvedData).toEqual(
       '[data-mm-select-option="true"],[data-mm-multi-select-option="true"] {border: 3px solid transparent' +
-      ' !important;max-width: 100px;padding: 20px !important;}'
+        ' !important;max-width: 100px;padding: 20px !important;}'
     );
   });
 });
