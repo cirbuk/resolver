@@ -573,12 +573,13 @@ const template1 = {
   ],
 };
 
-describe('overrideDefault issue', () =>
+test('overrideDefault issue', () =>
   expect(
     resolver.resolve(
       template1,
       {},
       {
+        // overrideDefault: false,
         mappers: [[/{{(.+?)}}/g, (_, group) => `{{test.0.${group}}}`]],
       }
     )

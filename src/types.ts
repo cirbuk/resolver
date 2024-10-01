@@ -22,12 +22,18 @@ export interface ResolverOptions {
   fields?: FieldsOption;
   mappers?: MappersType;
   delimiter?: string;
-  overrideDefault?: boolean;
   ignoreEmptyMapping?: boolean;
+  // Overrides the default resolution logic and relies entirely on the mapper logic to resolve
+  overrideDefault?: boolean;
+  // Resolves only mappings that match the regex provided
+  filters?: RegExp[];
 }
 
 export interface ResolveFunctionOptions {
   transformer?: TransformerFunction;
   mappers?: MappersType;
+  // Overrides the default resolution logic and relies entirely on the mapper logic to resolve
   overrideDefault?: boolean;
+  // Resolves only mappings that match the regex provided
+  filters?: RegExp[];
 }

@@ -35,19 +35,22 @@ export default class Resolver {
 
   ignoreEmptyMapping: boolean;
 
+  filters?: RegExp[];
+
   constructor({
-                replaceUndefinedWith,
-                ignoreUndefined = false,
-                transformer,
-                mappers,
-                fields = {
-                  mapping: '_mapping',
-                  transformer: '_transformer',
-                },
-                delimiter = '|',
-                overrideDefault = false,
-                ignoreEmptyMapping = false,
-              }: ResolverOptions = {}) {
+    replaceUndefinedWith,
+    ignoreUndefined = false,
+    transformer,
+    mappers,
+    fields = {
+      mapping: '_mapping',
+      transformer: '_transformer',
+    },
+    delimiter = '|',
+    overrideDefault = false,
+    ignoreEmptyMapping = false,
+    filters = [],
+  }: ResolverOptions = {}) {
     this.replaceUndefinedWith = replaceUndefinedWith;
     this.ignoreEmptyMapping = ignoreEmptyMapping;
     if (isUndefined(this.replaceUndefinedWith)) {
@@ -64,6 +67,7 @@ export default class Resolver {
       : '_transformer';
     this.delimiter = delimiter;
     this.overrideDefault = overrideDefault;
+    this.filters = filters;
   }
 
   _getTransformedResult(
@@ -87,8 +91,8 @@ export default class Resolver {
 
   static _resolveMappers(
     srcStr: string,
-    mappers: MappersType = [],
-    data: any
+    data: any,
+    mappers: MappersType = []
   ): string {
     return mappers.reduce((accStr, [regex, transformer]) => {
       if (!isString(accStr)) {
@@ -159,11 +163,13 @@ export default class Resolver {
       transformer,
       mappers = [],
       overrideDefault = false,
+      filters = [],
     }: ResolveFunctionOptions = {}
   ): unknown {
     overrideDefault = overrideDefault || this.overrideDefault;
     transformer = transformer || this.transformer;
     mappers = mappers || this.mappers;
+    filters = filters.length > 0 ? filters : this.filters ?? [];
     const resolve = (str: string, data: unknown, isFirst = true): string => {
       const regex = /{{|}}/g;
       let statusFlag = 0;
@@ -211,9 +217,12 @@ export default class Resolver {
       }
       return str;
     };
-    let finalValue = !overrideDefault ? resolve(str, data) : str;
+    const shouldResolve =
+      filters.length === 0 || filters.some((filter) => filter.test(str));
+    let finalValue =
+      shouldResolve && !overrideDefault ? resolve(str, data) : str;
     if (mappers.length > 0) {
-      finalValue = Resolver._resolveMappers(finalValue, mappers, data);
+      finalValue = Resolver._resolveMappers(finalValue, data, mappers);
     }
 
     return finalValue;
@@ -322,7 +331,6 @@ export default class Resolver {
 
   /**
    * Parses the template and returns true if it has at least 1 mapping. Returns as soon as a mapping is found.
-   * @param template: JS object with mappings
    */
   static hasAnyMapping(template: unknown): boolean {
     let hasMapping = false;
