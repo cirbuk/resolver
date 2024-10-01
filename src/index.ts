@@ -206,21 +206,24 @@ export default class Resolver {
       }
       if (!isFirst) {
         const {value: untransformedValue, key} = this._getValue(data, str);
-        return this._getTransformedResult(
-          key,
-          untransformedValue,
-          propName,
-          path.replace(/^./, ''),
-          transformer,
-          `{{${str}}}`
-        ) as string;
+        const shouldResolve =
+          filters.length === 0 || filters.some((filter) => filter.test(str));
+        const templateString = `{{${str}}}`;
+        if (shouldResolve) {
+          return this._getTransformedResult(
+            key,
+            untransformedValue,
+            propName,
+            path.replace(/^./, ''),
+            transformer,
+            templateString
+          ) as string;
+        }
+        return templateString;
       }
       return str;
     };
-    const shouldResolve =
-      filters.length === 0 || filters.some((filter) => filter.test(str));
-    let finalValue =
-      shouldResolve && !overrideDefault ? resolve(str, data) : str;
+    let finalValue = !overrideDefault ? resolve(str, data) : str;
     if (mappers.length > 0) {
       finalValue = Resolver._resolveMappers(finalValue, data, mappers);
     }
