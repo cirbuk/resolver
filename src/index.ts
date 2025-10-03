@@ -146,6 +146,13 @@ export default class Resolver {
         value = Array.isArray(value) ? value : JSON.parse(value as string);
       } else if (type === 'object') {
         value = isPlainObject(value) ? value : JSON.parse(value as string);
+      } else if (/^number_(\d+)_decimal$/.test(type)) {
+        const match = /^number_(\d+)_decimal$/.exec(type);
+        const decimals = match ? +match[1] : 0;
+        const numericValue = +(value as string);
+        if (!Number.isNaN(numericValue)) {
+          value = numericValue.toFixed(decimals);
+        }
       }
     }
     return {
